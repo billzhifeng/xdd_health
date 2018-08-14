@@ -1,0 +1,50 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.xueduoduo.health</groupId>
+	<artifactId>health-parent</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<properties>
+		<health.version>0.0.1-SNAPSHOT</health.version>
+	</properties>
+
+	<parent>
+		<groupId>com.github.project</groupId>
+		<artifactId>project-parent</artifactId>
+		<version>1.0.2018061401</version>
+	</parent>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.xueduoduo.health</groupId>
+				<artifactId>health-app-service</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.xueduoduo.health</groupId>
+				<artifactId>health-domain-core</artifactId>
+				<version>${health.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.xueduoduo.health</groupId>
+				<artifactId>health-dal</artifactId>
+				<version>${health.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.java.common.lang</groupId>
+				<artifactId>java-common-lang</artifactId>
+				<version>1.0.201808091</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<modules>
+		<module>health-app-service</module>
+		<module>health-domain-core</module>
+		<module>health-dal</module>
+		<module>health-test</module>
+	</modules>
+</project>

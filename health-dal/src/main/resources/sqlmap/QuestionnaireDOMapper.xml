@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xueduoduo.health.dal.dao.QuestionnaireDOMapper">
+  <resultMap id="BaseResultMap" type="com.xueduoduo.health.dal.dataobject.QuestionnaireDO">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="questionnaire_type" jdbcType="CHAR" property="questionnaireType" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="introduction" jdbcType="VARCHAR" property="introduction" />
+    <result column="create_status" jdbcType="CHAR" property="createStatus" />
+    <result column="is_deleted" jdbcType="CHAR" property="isDeleted" />
+    <result column="grade_no" jdbcType="INTEGER" property="gradeNo" />
+    <result column="start_date" jdbcType="DATE" property="startDate" />
+    <result column="ended_date" jdbcType="DATE" property="endedDate" />
+    <result column="school_year" jdbcType="VARCHAR" property="schoolYear" />
+    <result column="count" jdbcType="INTEGER" property="count" />
+    <result column="addition" jdbcType="VARCHAR" property="addition" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="updated_time" jdbcType="TIMESTAMP" property="updatedTime" />
+    <result column="createor" jdbcType="VARCHAR" property="createor" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, questionnaire_type, title, introduction, create_status, is_deleted, grade_no, 
+    start_date, ended_date, school_year, count, addition, created_time, updated_time, 
+    createor
+  </sql>
+  <select id="selectByExample" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDOExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    'true' as QUERYID,
+    <include refid="Base_Column_List" />
+    from t_questionnaire
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="offSet !=null and length != null">
+      limit ${offSet}, ${length}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from t_questionnaire
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDO" useGeneratedKeys="true" keyProperty="id">
+    insert into t_questionnaire
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="questionnaireType != null">
+        questionnaire_type,
+      </if>
+      <if test="title != null">
+        title,
+      </if>
+      <if test="introduction != null">
+        introduction,
+      </if>
+      <if test="createStatus != null">
+        create_status,
+      </if>
+      <if test="isDeleted != null">
+        is_deleted,
+      </if>
+      <if test="gradeNo != null">
+        grade_no,
+      </if>
+      <if test="startDate != null">
+        start_date,
+      </if>
+      <if test="endedDate != null">
+        ended_date,
+      </if>
+      <if test="schoolYear != null">
+        school_year,
+      </if>
+      <if test="count != null">
+        count,
+      </if>
+      <if test="addition != null">
+        addition,
+      </if>
+      <if test="createdTime != null">
+        created_time,
+      </if>
+      <if test="updatedTime != null">
+        updated_time,
+      </if>
+      <if test="createor != null">
+        createor,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="questionnaireType != null">
+        #{questionnaireType,jdbcType=CHAR},
+      </if>
+      <if test="title != null">
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="introduction != null">
+        #{introduction,jdbcType=VARCHAR},
+      </if>
+      <if test="createStatus != null">
+        #{createStatus,jdbcType=CHAR},
+      </if>
+      <if test="isDeleted != null">
+        #{isDeleted,jdbcType=CHAR},
+      </if>
+      <if test="gradeNo != null">
+        #{gradeNo,jdbcType=INTEGER},
+      </if>
+      <if test="startDate != null">
+        #{startDate,jdbcType=DATE},
+      </if>
+      <if test="endedDate != null">
+        #{endedDate,jdbcType=DATE},
+      </if>
+      <if test="schoolYear != null">
+        #{schoolYear,jdbcType=VARCHAR},
+      </if>
+      <if test="count != null">
+        #{count,jdbcType=INTEGER},
+      </if>
+      <if test="addition != null">
+        #{addition,jdbcType=VARCHAR},
+      </if>
+      <if test="createdTime != null">
+        #{createdTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatedTime != null">
+        #{updatedTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createor != null">
+        #{createor,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDOExample" resultType="java.lang.Long">
+    select count(*) from t_questionnaire
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByPrimaryKeySelective" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDO">
+    update t_questionnaire
+    <set>
+      <if test="questionnaireType != null">
+        questionnaire_type = #{questionnaireType,jdbcType=CHAR},
+      </if>
+      <if test="title != null">
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="introduction != null">
+        introduction = #{introduction,jdbcType=VARCHAR},
+      </if>
+      <if test="createStatus != null">
+        create_status = #{createStatus,jdbcType=CHAR},
+      </if>
+      <if test="isDeleted != null">
+        is_deleted = #{isDeleted,jdbcType=CHAR},
+      </if>
+      <if test="gradeNo != null">
+        grade_no = #{gradeNo,jdbcType=INTEGER},
+      </if>
+      <if test="startDate != null">
+        start_date = #{startDate,jdbcType=DATE},
+      </if>
+      <if test="endedDate != null">
+        ended_date = #{endedDate,jdbcType=DATE},
+      </if>
+      <if test="schoolYear != null">
+        school_year = #{schoolYear,jdbcType=VARCHAR},
+      </if>
+      <if test="count != null">
+        count = #{count,jdbcType=INTEGER},
+      </if>
+      <if test="addition != null">
+        addition = #{addition,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedTime != null">
+        updated_time = #{updatedTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createor != null">
+        createor = #{createor,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT} and create_status !='PUBLISHED' and is_deleted='N'
+  </update>
+  <update id="updateToDeleted" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDO">
+    update t_questionnaire
+    <set>
+      <if test="isDeleted != null">
+        is_deleted = #{isDeleted,jdbcType=CHAR},
+      </if>
+      <if test="addition != null">
+        addition = #{addition,jdbcType=VARCHAR},
+      </if>
+    </set>
+    updated_time = now()  where id = #{id,jdbcType=BIGINT} and create_status !='PUBLISHED' and is_deleted='N'
+  </update>
+  <update id="updateByDeleteOneQuestion" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDO">
+    update t_questionnaire  set count = (count-1)
+    updated_time = now()  where id = #{id,jdbcType=BIGINT} and create_status !='PUBLISHED' and is_deleted='N'
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDO">
+    update t_questionnaire
+    set questionnaire_type = #{questionnaireType,jdbcType=CHAR},
+      title = #{title,jdbcType=VARCHAR},
+      introduction = #{introduction,jdbcType=VARCHAR},
+      create_status = #{createStatus,jdbcType=CHAR},
+      is_deleted = #{isDeleted,jdbcType=CHAR},
+      grade_no = #{gradeNo,jdbcType=INTEGER},
+      start_date = #{startDate,jdbcType=DATE},
+      ended_date = #{endedDate,jdbcType=DATE},
+      school_year = #{schoolYear,jdbcType=VARCHAR},
+      count = #{count,jdbcType=INTEGER},
+      addition = #{addition,jdbcType=VARCHAR},
+      created_time = #{createdTime,jdbcType=TIMESTAMP},
+      updated_time = #{updatedTime,jdbcType=TIMESTAMP},
+      createor = #{createor,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>
