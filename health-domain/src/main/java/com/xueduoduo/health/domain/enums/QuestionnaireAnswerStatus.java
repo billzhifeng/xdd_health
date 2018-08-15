@@ -1,18 +1,19 @@
 package com.xueduoduo.health.domain.enums;
 
 /**
- * 问卷状态
+ * 问卷答题状态
  * 
  * @author wangzhifeng
  * @date 2018年8月10日 下午11:06:36
  */
-public enum QuestionnaireStatusType {
-    //创建步骤:CREATED创建\PUBLISHED已发布
-    CREATED("创建完成未发布"),
-    PUBLISHED("已发布"),;
+public enum QuestionnaireAnswerStatus {
+    //INIT未开始\DOING回答中\DONE结束
+    INIT("未答题"),
+    DOING("测评中"),
+    DONE("完成"),;
     private String desc;
 
-    QuestionnaireStatusType(String desc) {
+    QuestionnaireAnswerStatus(String desc) {
         this.desc = desc;
     }
 
