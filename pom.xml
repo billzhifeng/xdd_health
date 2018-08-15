@@ -21,7 +21,7 @@
 			<dependency>
 				<groupId>com.xueduoduo.health</groupId>
 				<artifactId>health-app-service</artifactId>
-				<version>1.0.0</version>
+				<version>${health.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.xueduoduo.health</groupId>
@@ -43,7 +43,7 @@
 
 	<modules>
 		<module>health-app-service</module>
-		<module>health-domain-core</module>
+		<module>health-domain</module>
 		<module>health-dal</module>
 		<module>health-test</module>
 	</modules>

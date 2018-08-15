@@ -1,5 +1,6 @@
 package com.xueduoduo.health.domain.questionnaire;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -9,35 +10,73 @@ import java.util.Date;
  * @date 2018年8月11日 下午8:43:17
  */
 public class Questionnaire {
-    private Long    id;
+    private Long       id;
 
-    private String  questionnaireType;
+    private String     questionnaireType;
 
-    private String  title;
+    private String     title;
 
-    private String  introduction;
+    private String     introduction;
 
-    private String  createStatus;
+    private String     createStatus;
 
-    private String  isDeleted;
+    private String     isDeleted;
 
-    private Integer gradeNo;
+    private Integer    gradeNo;
 
-    private Date    startDate;
+    private Date       startDate;
 
-    private Date    endedDate;
+    private Date       endedDate;
 
-    private String  schoolYear;
+    private String     schoolYear;
+    //题目数量
+    private Integer    count;
 
-    private Integer count;
+    private String     addition;
 
-    private String  addition;
+    private Date       createdTime;
 
-    private Date    createdTime;
+    private Date       updatedTime;
 
-    private Date    updatedTime;
+    private String     createor;
 
-    private String  createor;
+    //已经测评学生人数统计
+    private int        studentAnswerCount;
+    //总学生人数
+    private int        totalStudentCount;
+    //学生未测评人数
+    private int        studentnotAnswerCount;
+    //完成测评比例
+    private BigDecimal answeredRate;
+
+    public int getStudentnotAnswerCount() {
+        studentnotAnswerCount = totalStudentCount - studentAnswerCount;
+        return studentnotAnswerCount;
+    }
+
+    public int getStudentAnswerCount() {
+        return studentAnswerCount;
+    }
+
+    public void setStudentAnswerCount(int studentAnswerCount) {
+        this.studentAnswerCount = studentAnswerCount;
+    }
+
+    public int getTotalStudentCount() {
+        return totalStudentCount;
+    }
+
+    public void setTotalStudentCount(int totalStudentCount) {
+        this.totalStudentCount = totalStudentCount;
+    }
+
+    public BigDecimal getAnsweredRate() {
+        return answeredRate;
+    }
+
+    public void setAnsweredRate(BigDecimal answeredRate) {
+        this.answeredRate = answeredRate;
+    }
 
     public Long getId() {
         return id;

@@ -12,6 +12,7 @@
     <result column="grade_no" jdbcType="INTEGER" property="gradeNo" />
     <result column="class_no" jdbcType="INTEGER" property="classNo" />
     <result column="password" jdbcType="VARCHAR" property="password" />
+    <result column="header_img" jdbcType="VARCHAR" property="headerImg" />
     <result column="phone" jdbcType="VARCHAR" property="phone" />
     <result column="user_status" jdbcType="CHAR" property="userStatus" />
     <result column="addition" jdbcType="VARCHAR" property="addition" />
@@ -19,9 +20,6 @@
     <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
     <result column="updated_time" jdbcType="TIMESTAMP" property="updatedTime" />
     <result column="is_deleted" jdbcType="CHAR" property="isDeleted" />
-  </resultMap>
-  <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.xueduoduo.health.dal.dataobject.UserDO">
-    <result column="header_img" jdbcType="LONGVARCHAR" property="headerImg" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -54,29 +52,9 @@
   </sql>
   <sql id="Base_Column_List">
     id, role, user_name, position, gender, account_no, student_no, grade_no, class_no, 
-    password, phone, user_status, addition, createor_id, created_time, updated_time, 
+    password, header_img, phone, user_status, addition, createor_id, created_time, updated_time, 
     is_deleted
   </sql>
-  <sql id="Blob_Column_List">
-    header_img
-  </sql>
-  <select id="selectByExampleWithBLOBs" parameterType="com.xueduoduo.health.dal.dataobject.UserDOExample" resultMap="ResultMapWithBLOBs">
-    select
-    <if test="distinct">
-      distinct
-    </if>
-    'true' as QUERYID,
-    <include refid="Base_Column_List" />
-    ,
-    <include refid="Blob_Column_List" />
-    from t_user
-    <if test="_parameter != null">
-      <include refid="Example_Where_Clause" />
-    </if>
-    <if test="orderByClause != null">
-      order by ${orderByClause}
-    </if>
-  </select>
   <select id="selectByExample" parameterType="com.xueduoduo.health.dal.dataobject.UserDOExample" resultMap="BaseResultMap">
     select
     <if test="distinct">
@@ -95,15 +73,13 @@
       limit ${offSet}, ${length}
     </if>
   </select>
-  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="ResultMapWithBLOBs">
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    ,
-    <include refid="Blob_Column_List" />
     from t_user
     where id = #{id,jdbcType=BIGINT}
   </select>
-  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.UserDO" useGeneratedKeys="true" keyProperty="id">
+  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.UserDO">
     insert into t_user
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -136,6 +112,9 @@
       <if test="password != null">
         password,
       </if>
+      <if test="headerImg != null">
+        header_img,
+      </if>
       <if test="phone != null">
         phone,
       </if>
@@ -156,9 +135,6 @@
       </if>
       <if test="isDeleted != null">
         is_deleted,
-      </if>
-      <if test="headerImg != null">
-        header_img,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -192,6 +168,9 @@
       <if test="password != null">
         #{password,jdbcType=VARCHAR},
       </if>
+      <if test="headerImg != null">
+        #{headerImg,jdbcType=VARCHAR},
+      </if>
       <if test="phone != null">
         #{phone,jdbcType=VARCHAR},
       </if>
@@ -212,9 +191,6 @@
       </if>
       <if test="isDeleted != null">
         #{isDeleted,jdbcType=CHAR},
-      </if>
-      <if test="headerImg != null">
-        #{headerImg,jdbcType=LONGVARCHAR},
       </if>
     </trim>
   </insert>
@@ -254,6 +230,9 @@
       <if test="password != null">
         password = #{password,jdbcType=VARCHAR},
       </if>
+      <if test="headerImg != null">
+        header_img = #{headerImg,jdbcType=VARCHAR},
+      </if>
       <if test="phone != null">
         phone = #{phone,jdbcType=VARCHAR},
       </if>
@@ -275,31 +254,7 @@
       <if test="isDeleted != null">
         is_deleted = #{isDeleted,jdbcType=CHAR},
       </if>
-      <if test="headerImg != null">
-        header_img = #{headerImg,jdbcType=LONGVARCHAR},
-      </if>
     </set>
-    where id = #{id,jdbcType=BIGINT}
-  </update>
-  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.xueduoduo.health.dal.dataobject.UserDO">
-    update t_user
-    set role = #{role,jdbcType=CHAR},
-      user_name = #{userName,jdbcType=VARCHAR},
-      position = #{position,jdbcType=VARCHAR},
-      gender = #{gender,jdbcType=CHAR},
-      account_no = #{accountNo,jdbcType=VARCHAR},
-      student_no = #{studentNo,jdbcType=VARCHAR},
-      grade_no = #{gradeNo,jdbcType=INTEGER},
-      class_no = #{classNo,jdbcType=INTEGER},
-      password = #{password,jdbcType=VARCHAR},
-      phone = #{phone,jdbcType=VARCHAR},
-      user_status = #{userStatus,jdbcType=CHAR},
-      addition = #{addition,jdbcType=VARCHAR},
-      createor_id = #{createorId,jdbcType=VARCHAR},
-      created_time = #{createdTime,jdbcType=TIMESTAMP},
-      updated_time = #{updatedTime,jdbcType=TIMESTAMP},
-      is_deleted = #{isDeleted,jdbcType=CHAR},
-      header_img = #{headerImg,jdbcType=LONGVARCHAR}
     where id = #{id,jdbcType=BIGINT}
   </update>
   <update id="updateByPrimaryKey" parameterType="com.xueduoduo.health.dal.dataobject.UserDO">
@@ -313,6 +268,7 @@
       grade_no = #{gradeNo,jdbcType=INTEGER},
       class_no = #{classNo,jdbcType=INTEGER},
       password = #{password,jdbcType=VARCHAR},
+      header_img = #{headerImg,jdbcType=VARCHAR},
       phone = #{phone,jdbcType=VARCHAR},
       user_status = #{userStatus,jdbcType=CHAR},
       addition = #{addition,jdbcType=VARCHAR},

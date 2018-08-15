@@ -9,15 +9,11 @@ public interface UserDOMapper {
 
     int insertSelective(UserDO record);
 
-    List<UserDO> selectByExampleWithBLOBs(UserDOExample example);
-
     List<UserDO> selectByExample(UserDOExample example);
 
     UserDO selectByPrimaryKey(Long id);
 
     int updateByPrimaryKeySelective(UserDO record);
-
-    int updateByPrimaryKeyWithBLOBs(UserDO record);
 
     int updateByPrimaryKey(UserDO record);
 }

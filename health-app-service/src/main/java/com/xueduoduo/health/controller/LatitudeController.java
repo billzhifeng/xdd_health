@@ -109,7 +109,7 @@ public class LatitudeController {
             Latitude src = new Latitude();
             src.setId(Long.parseLong(idStr));
             src.setIsDeleted(IsDeleted.Y.name());
-            latitudeRepository.update(src);
+            latitudeRepository.updateToDelete(src);
         } catch (Exception e) {
             logger.error("删除纬度异常", e);
             resp = BaseResp.buildFailResp("删除纬度异常" + e.getMessage(), BaseResp.class);

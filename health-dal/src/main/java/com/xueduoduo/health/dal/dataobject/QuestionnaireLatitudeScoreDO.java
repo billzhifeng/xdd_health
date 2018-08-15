@@ -1,5 +1,6 @@
 package com.xueduoduo.health.dal.dataobject;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class QuestionnaireLatitudeScoreDO {
@@ -9,9 +10,9 @@ public class QuestionnaireLatitudeScoreDO {
 
     private Long latitudeId;
 
-    private Integer scoreMin;
+    private BigDecimal scoreMin;
 
-    private Integer scoreMax;
+    private BigDecimal scoreMax;
 
     private String comment;
 
@@ -49,19 +50,19 @@ public class QuestionnaireLatitudeScoreDO {
         this.latitudeId = latitudeId;
     }
 
-    public Integer getScoreMin() {
+    public BigDecimal getScoreMin() {
         return scoreMin;
     }
 
-    public void setScoreMin(Integer scoreMin) {
+    public void setScoreMin(BigDecimal scoreMin) {
         this.scoreMin = scoreMin;
     }
 
-    public Integer getScoreMax() {
+    public BigDecimal getScoreMax() {
         return scoreMax;
     }
 
-    public void setScoreMax(Integer scoreMax) {
+    public void setScoreMax(BigDecimal scoreMax) {
         this.scoreMax = scoreMax;
     }
 

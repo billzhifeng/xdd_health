@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alibaba.fastjson.JSONArray;
 import com.github.java.common.base.BaseResp;
 import com.github.java.common.base.Page;
 import com.github.java.common.utils.DateUtil;
@@ -18,6 +19,7 @@ import com.github.java.common.utils.JavaAssert;
 import com.github.java.common.utils.StringUtils;
 import com.xueduoduo.health.configuration.SchoolYearUtils;
 import com.xueduoduo.health.domain.common.HealthException;
+import com.xueduoduo.health.domain.enums.QuestionnaireType;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.questionnaire.Questionnaire;
 import com.xueduoduo.health.domain.questionnaire.repository.QuestionnaireRepository;
@@ -108,7 +110,7 @@ public class QuestionnaireController {
     }
 
     /**
-     * 展示添加编辑问卷题目
+     * 展示添加编辑问卷题目+选项
      */
     @RequestMapping(value = "admin/review/showAddQuestionnaireQuestions", method = RequestMethod.GET)
     public BaseResp showAddQuestionnaireQuestions(HttpServletRequest req) {
@@ -129,7 +131,7 @@ public class QuestionnaireController {
     /**
      * 保存问卷题目+选项
      */
-    @RequestMapping(value = "admin/review/addQuestionnaireQuestions", method = RequestMethod.GET)
+    @RequestMapping(value = "admin/review/addQuestionnaireQuestions", method = RequestMethod.POST)
     public BaseResp addQuestionnaireQuestions(HttpServletRequest req) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
@@ -137,8 +139,6 @@ public class QuestionnaireController {
             JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
                     HealthException.class);
             String questions = req.getParameter("questions");
-            JavaAssert.isTrue(StringUtils.isNotBlank(questions), ReturnCode.PARAM_ILLEGLE, "问卷问题不能为空",
-                    HealthException.class);
             String title = req.getParameter("title");
             JavaAssert.isTrue(StringUtils.isNotBlank(title), ReturnCode.PARAM_ILLEGLE, "问卷标题不能为空",
                     HealthException.class);
@@ -148,6 +148,9 @@ public class QuestionnaireController {
             User user = UserSessionUtils.getUserFromSession(req);
             questionnaireService.addQuestionnaireQuestions(Long.parseLong(idStr), title, introduction, questions,
                     user.getUserName());
+        } catch (HealthException e) {
+            logger.error("保存问卷题目异常", e);
+            resp = BaseResp.buildFailResp("保存问卷题目异常" + e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("保存问卷题目异常", e);
             resp = BaseResp.buildFailResp("保存问卷题目异常" + e.getMessage(), BaseResp.class);
@@ -189,6 +192,8 @@ public class QuestionnaireController {
 
             User user = UserSessionUtils.getUserFromSession(req);
             questionnaireRepository.updateToPublished(q, user.getUserName());
+
+            //TODO 生成问卷
         } catch (Exception e) {
             logger.error("发布问卷题目异常", e);
             resp = BaseResp.buildFailResp("发布问卷题目异常" + e.getMessage(), BaseResp.class);
@@ -239,7 +244,7 @@ public class QuestionnaireController {
     /**
      * 展示设置分数+纬度
      */
-    @RequestMapping(value = "admin/review/showAddScoreAndLatitude", method = RequestMethod.POST)
+    @RequestMapping(value = "admin/review/showAddScoreAndLatitude", method = RequestMethod.GET)
     public BaseResp showAddScoreAndLatitude(HttpServletRequest req) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
@@ -278,4 +283,155 @@ public class QuestionnaireController {
         }
         return resp;
     }
+
+    /**
+     * 展示添加问卷纬度描述设置
+     * 
+     * @return
+     */
+    @RequestMapping(value = "admin/review/showQuestionnaireLatitudeDesc", method = RequestMethod.GET)
+    public BaseResp showQuestionnaireLatitudeDesc(HttpServletRequest req) {
+
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            String idStr = req.getParameter("questionnaireId");
+            JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
+                    HealthException.class);
+
+            questionnaireService.showQuestionnaireLatitudeDesc(Long.parseLong(idStr));
+        } catch (Exception e) {
+            logger.error("展示添加问卷纬度描述异常", e);
+            resp = BaseResp.buildFailResp("展示添加问卷纬度描述异常" + e.getMessage(), BaseResp.class);
+        }
+        return resp;
+    }
+
+    /**
+     * 添加问卷纬度描述设置
+     */
+    @RequestMapping(value = "admin/review/addQuestionnaireLatitudeDesc", method = RequestMethod.POST)
+    public BaseResp addQuestionnaireLatitudeDesc(HttpServletRequest req) {
+
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            String idStr = req.getParameter("questionnaireId");
+            JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
+                    HealthException.class);
+            String scoreDescJson = req.getParameter("scoreDescJson");
+            JavaAssert.isTrue(StringUtils.isNotBlank(scoreDescJson), ReturnCode.PARAM_ILLEGLE, "纬度描述不能为空",
+                    HealthException.class);
+            User user = UserSessionUtils.getUserFromSession(req);
+
+            questionnaireService.addQuestionnaireLatitudeDesc(Long.parseLong(idStr), scoreDescJson, user.getUserName());
+        } catch (Exception e) {
+            logger.error("展示添加问卷纬度描述异常", e);
+            resp = BaseResp.buildFailResp("展示添加问卷纬度描述异常" + e.getMessage(), BaseResp.class);
+        }
+        return resp;
+    }
+
+    /**
+     * 测评问卷:问卷对学生答题和老师测评统计
+     */
+    @RequestMapping(value = "admin/review/questionnaireAnswerSumary", method = RequestMethod.GET)
+    public BaseResp questionnaireAnswerSumary(HttpServletRequest req) {
+
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            String gradeNo = (String) req.getParameter("gradeNo");
+            String title = (String) req.getParameter("title");
+            String offSetStr = (String) req.getParameter("offSet");
+            String lengthStr = (String) req.getParameter("length");
+            Page<Questionnaire> page = questionnaireService.questionnaireAnswerSumary(gradeNo, title, offSetStr,
+                    lengthStr, QuestionnaireType.STUDENT.name());
+            resp.setData(page);
+        } catch (Exception e) {
+            logger.error("展示测评问卷异常", e);
+            resp = BaseResp.buildFailResp("展示测评问卷异常" + e.getMessage(), BaseResp.class);
+        }
+        return resp;
+    }
+
+    /**
+     * 测评年级班级学生明细
+     * 
+     * @param req
+     * @return
+     */
+    @RequestMapping(value = "admin/review/questionnaireGradeClassSummary", method = RequestMethod.GET)
+    public BaseResp questionnaireGradeClassSummary(HttpServletRequest req) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            String idStr = req.getParameter("questionnaireId");
+            JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
+                    HealthException.class);
+            String gradeNo = req.getParameter("gradeNo");
+            JavaAssert.isTrue(StringUtils.isNotBlank(gradeNo), ReturnCode.PARAM_ILLEGLE, "年级不能为空",
+                    HealthException.class);
+            String classNo = req.getParameter("classNo");
+            JavaAssert.isTrue(StringUtils.isNotBlank(classNo), ReturnCode.PARAM_ILLEGLE, "班级不能为空",
+                    HealthException.class);
+
+            JSONArray ja = questionnaireService.questionnaireGradeClassSummary(Long.parseLong(idStr),
+                    Integer.parseInt(gradeNo), Integer.parseInt(classNo));
+            resp.setData(ja.toJSONString());
+        } catch (Exception e) {
+            logger.error("展示测评问卷异常", e);
+            resp = BaseResp.buildFailResp("展示测评问卷异常" + e.getMessage(), BaseResp.class);
+        }
+        return resp;
+    }
+
+    /**
+     * 教师测评学生
+     */
+    @RequestMapping(value = "admin/review/showTeacherTestQuestionnaire", method = RequestMethod.GET)
+    public BaseResp showTeacherTestQuestionnaire(HttpServletRequest req) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            String idStr = req.getParameter("questionnaireId");
+            JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
+                    HealthException.class);
+            String studentIdStr = req.getParameter("studentId");
+            JavaAssert.isTrue(StringUtils.isNotBlank(studentIdStr), ReturnCode.PARAM_ILLEGLE, "学生Id不能为空",
+                    HealthException.class);
+            User user = UserSessionUtils.getUserFromSession(req);
+
+            return questionnaireService.showTeacherTestQuestionnaire(Long.parseLong(idStr),
+                    Long.parseLong(studentIdStr));
+        } catch (Exception e) {
+            logger.error("展示测评问卷异常", e);
+            resp = BaseResp.buildFailResp("展示测评问卷异常" + e.getMessage(), BaseResp.class);
+        }
+        return resp;
+    }
+
+    /**
+     * 保存教师测评学生结果
+     */
+    @RequestMapping(value = "admin/review/addTeacherTestQuestionnaire", method = RequestMethod.POST)
+    public BaseResp addTeacherTestQuestionnaire(HttpServletRequest req) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            String idStr = req.getParameter("questionnaireId");
+            JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
+                    HealthException.class);
+            String studentIdStr = req.getParameter("studentId");
+            JavaAssert.isTrue(StringUtils.isNotBlank(studentIdStr), ReturnCode.PARAM_ILLEGLE, "学生Id不能为空",
+                    HealthException.class);
+            String questionOptionsJson = req.getParameter("questionOptions");
+            JavaAssert.isTrue(StringUtils.isNotBlank(questionOptionsJson), ReturnCode.PARAM_ILLEGLE, "教师对学生测评结果不能为空",
+                    HealthException.class);
+
+            User user = UserSessionUtils.getUserFromSession(req);
+
+            questionnaireService.addTeacherTestQuestionnaire(Long.parseLong(idStr), Long.parseLong(studentIdStr),
+                    questionOptionsJson, user.getUserName());
+        } catch (Exception e) {
+            logger.error("保存教师测评学生结果异常", e);
+            resp = BaseResp.buildFailResp("保存教师测评学生结果异常" + e.getMessage(), BaseResp.class);
+        }
+        return resp;
+    }
+
 }

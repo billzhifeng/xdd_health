@@ -6,14 +6,17 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,14 +24,21 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.java.common.base.BaseResp;
+import com.github.java.common.base.Page;
 import com.github.java.common.utils.JavaAssert;
 import com.xueduoduo.health.dal.dao.QuestionDOMapper;
 import com.xueduoduo.health.dal.dao.QuestionOptionDOMapper;
+import com.xueduoduo.health.dal.dao.QuestionnaireLatitudeScoreDOMapper;
 import com.xueduoduo.health.dal.dataobject.QuestionDO;
+import com.xueduoduo.health.dal.dataobject.QuestionDOExample;
 import com.xueduoduo.health.dal.dataobject.QuestionOptionDO;
 import com.xueduoduo.health.dal.dataobject.QuestionOptionDOExample;
+import com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO;
+import com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDOExample;
 import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.IsDeleted;
+import com.xueduoduo.health.domain.enums.QuestionnaireAnswerStatus;
+import com.xueduoduo.health.domain.enums.QuestionnaireStatusType;
 import com.xueduoduo.health.domain.enums.QuestionnaireType;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.latitude.Latitude;
@@ -36,7 +46,13 @@ import com.xueduoduo.health.domain.latitude.LatitudeRepository;
 import com.xueduoduo.health.domain.questionnaire.Question;
 import com.xueduoduo.health.domain.questionnaire.QuestionOption;
 import com.xueduoduo.health.domain.questionnaire.Questionnaire;
+import com.xueduoduo.health.domain.questionnaire.QuestionnaireLatitudeScore;
+import com.xueduoduo.health.domain.questionnaire.UserQuestionAnswer;
+import com.xueduoduo.health.domain.questionnaire.UserQuestionnaire;
 import com.xueduoduo.health.domain.questionnaire.repository.QuestionnaireRepository;
+import com.xueduoduo.health.domain.questionnaire.repository.UserQuestionnaireRepository;
+import com.xueduoduo.health.domain.user.User;
+import com.xueduoduo.health.domain.user.UserRepository;
 
 /**
  * @author wangzhifeng
@@ -44,16 +60,22 @@ import com.xueduoduo.health.domain.questionnaire.repository.QuestionnaireReposit
  */
 @Service
 public class QuestionnaireService {
-    private static final Logger     logger = LoggerFactory.getLogger(QuestionnaireService.class);
+    private static final Logger                logger = LoggerFactory.getLogger(QuestionnaireService.class);
 
     @Autowired
-    private QuestionnaireRepository questionnaireRepository;
+    private QuestionnaireRepository            questionnaireRepository;
     @Autowired
-    private QuestionDOMapper        questionDOMapper;
+    private QuestionDOMapper                   questionDOMapper;
     @Autowired
-    private QuestionOptionDOMapper  questionOptionDOMapper;
+    private QuestionOptionDOMapper             questionOptionDOMapper;
     @Autowired
-    private LatitudeRepository      latitudeRepository;
+    private LatitudeRepository                 latitudeRepository;
+    @Autowired
+    private QuestionnaireLatitudeScoreDOMapper questionnaireLatitudeScoreDOMapper;
+    @Autowired
+    private UserRepository                     userRepository;
+    @Autowired
+    private UserQuestionnaireRepository        userQuestionnaireRepository;
 
     /**
      * 复制问卷
@@ -83,12 +105,12 @@ public class QuestionnaireService {
 
         //问卷步骤、按钮是否展示
         JSONArray btns = new JSONArray();
-        JSONArray steps = new JSONArray();
+        JSONArray steps = new JSONArray(3);
         btns.add("next_btn");
-        steps.add(1, "question_set_step");
-        steps.add(2, "score_set_step");
+        steps.add(0, "question_set_step");
+        steps.add(1, "score_set_step");
         if (QuestionnaireType.STUDENT.name().equals(qe.getQuestionnaireType())) {//学生问卷
-            steps.add(3, "latitude_set_step");
+            steps.add(2, "latitude_set_step");
         }
         json.put("btns", btns);
         json.put("steps", steps);
@@ -449,7 +471,7 @@ public class QuestionnaireService {
      */
     @Transactional
     public void addScoreAndLatitude(Long questionnaireId, String questionsJsonStr, String userName) {
-
+        Date now = new Date();
         //问卷下有问题列表
         JSONArray ja = JSONArray.parseArray(questionsJsonStr);
         JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "问卷题目为空", HealthException.class);
@@ -466,72 +488,447 @@ public class QuestionnaireService {
             //纬度Id
             Long latitudeId = Long.parseLong(latitudeIdStr);
 
+            //更新题目纬度
+            QuestionDO question = new QuestionDO();
+            question.setId(questionId);
+            question.setLatitudeId(latitudeId);
+            question.setUpdatedTime(now);
+            question.setAddition(userName + "设置题目纬度");
+            int qCount = questionDOMapper.updateByPrimaryKeySelective(question);
+            JavaAssert.isTrue(1 == qCount, ReturnCode.PARAM_ILLEGLE, "问卷题目纬度更新异常", HealthException.class);
+
             //每个题目下的所有选项
             String optionsStr = (String) q.get("optionsStr");
             JavaAssert.isTrue(StringUtils.isNoneBlank(optionsStr), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
                     HealthException.class);
 
-            //选项
-            JSONArray ja = JSONArray.parseArray(optionsStr);
+            //问题所有选项
+            JSONArray ops = JSONArray.parseArray(optionsStr);
             JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
                     HealthException.class);
-            int size = ja.size();
-            for (int i = 0; i < size; i++) {
 
-                JSONObject option = ja.getJSONObject(i);
-                String optionNoStr = (String) option.get("optionNo");
-                int optionNo = Integer.parseInt(optionNoStr);
-                String displayName = (String) option.get("displayName");
+            //更新每个选项分数+纬度
+            int opsSize = ops.size();
+            for (int j = 0; j < opsSize; j++) {
+
+                JSONObject option = ops.getJSONObject(j);
+                String optionIdStr = (String) option.get("optionId");
+                Long optionId = Long.parseLong(optionIdStr);
                 String scoreStr = (String) option.get("score");
                 BigDecimal score = new BigDecimal(scoreStr);
                 score.setScale(1);//1位小数
 
                 QuestionOptionDO o = new QuestionOptionDO();
-                o.setDisplayName(displayName);
-                o.setCreateor(userName);
-                o.setOptionNo(optionNo);
-                o.setQuestionId(questionId);
-                o.setQuestionnaireId(questionnaireId);
+                o.setId(optionId);
                 o.setScore(score);
-                o.setCreateor(userName);
-                o.setCreatedTime(today);
-                o.setUpdatedTime(today);
-                o.setIsDeleted(IsDeleted.N.name());
-
-                count = questionOptionDOMapper.insertSelective(o);
-                JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目选项保存异常", HealthException.class);
+                o.setUpdatedTime(now);
+                o.setLatitudeId(latitudeId);
+                o.setAddition(o.getAddition() + ";设置分数");
+                int count = questionOptionDOMapper.updateByPrimaryKeySelective(o);
+                JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目选项分数保存异常", HealthException.class);
             }
-
-            //分数
-            String scoreStr = (String) q.get("score");
-            BigDecimal score = new BigDecimal(scoreStr);
-            score.setScale(1);//1位小数
-
-            //更新题目纬度
-
-            //更新题目选项分数+纬度
         }
     }
 
     /**
-     * 更新题目纬度
-     * 
-     * @param questionId
-     * @param latitudedId
+     * 学生问卷展示添加问卷纬度描述设置
+     */
+    public void showQuestionnaireLatitudeDesc(Long questionnaireId) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        JSONObject json = new JSONObject();
+        //查询问卷
+        Questionnaire qe = questionnaireRepository.loadById(questionnaireId);
+        json.put("questionnaire", qe);
+
+        //问卷步骤、按钮是否展示
+        JSONArray btns = new JSONArray();
+        JSONArray steps = new JSONArray();
+
+        steps.add(1, "question_set_step");
+        steps.add(2, "score_set_step");
+        steps.add(3, "latitude_set_step");
+
+        btns.add("publish_btn");//教师问卷有发布按钮
+        btns.add("pre_btn");
+
+        json.put("btns", btns);
+        json.put("steps", steps);
+
+        //纬度列表
+        List<Latitude> allLats = latitudeRepository.loadAll();
+
+        Set<Long> latIds = new HashSet<Long>();
+        QuestionDOExample qea = new QuestionDOExample();
+        QuestionDOExample.Criteria qcri = qea.createCriteria();
+        qcri.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<QuestionDO> qs = questionDOMapper.selectByExample(qea);
+        JavaAssert.isTrue(!CollectionUtils.isEmpty(qs), ReturnCode.PARAM_ILLEGLE, "题目未设置纬度", HealthException.class);
+        for (QuestionDO q : qs) {
+            latIds.add(q.getLatitudeId());
+        }
+
+        List<Latitude> latitudes = new ArrayList<Latitude>();
+        for (Latitude src : allLats) {
+            if (latIds.contains(src.getId())) {
+                latitudes.add(src);
+            }
+        }
+
+        json.put("latitudes", latitudes);
+
+        //查询纬度设置
+        QuestionnaireLatitudeScoreDOExample example = new QuestionnaireLatitudeScoreDOExample();
+        QuestionnaireLatitudeScoreDOExample.Criteria cri = example.createCriteria();
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<QuestionnaireLatitudeScoreDO> scores = questionnaireLatitudeScoreDOMapper.selectByExample(example);
+
+        Collections.sort(scores, Comparator.comparing(QuestionnaireLatitudeScoreDO::getLatitudeId)
+                .thenComparing(QuestionnaireLatitudeScoreDO::getScoreMin));
+
+        List<QuestionnaireLatitudeScore> scoreList = new ArrayList<QuestionnaireLatitudeScore>();
+        for (QuestionnaireLatitudeScoreDO src : scores) {
+            scoreList.add(convertQuestionnaireLatitudeScore(src));
+        }
+    }
+
+    /**
+     * 添加问卷纬度描述设置
      */
     @Transactional
-    private void updateQuestionLatitude(Long questionId, Long latitudedId) {
+    public void addQuestionnaireLatitudeDesc(Long questionnaireId, String scoreDescJson, String userName) {
+        Date now = new Date();
+        //纬度描述
+        JSONArray ja = JSONArray.parseArray(scoreDescJson);
+        JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "纬度描述为空", HealthException.class);
+
+        //查询纬度设置
+        QuestionnaireLatitudeScoreDOExample example = new QuestionnaireLatitudeScoreDOExample();
+        QuestionnaireLatitudeScoreDOExample.Criteria cri = example.createCriteria();
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<QuestionnaireLatitudeScoreDO> oriScores = questionnaireLatitudeScoreDOMapper.selectByExample(example);
+
+        //是否编辑
+        boolean isUpdateFlag = false;
+        Set<Long> updatedIds = new HashSet<Long>();
+
+        //循环纬度描述
+        int size = ja.size();
+        for (int i = 0; i < size; i++) {
+            //描述
+            JSONObject q = ja.getJSONObject(i);
+            //纬度Id
+            String latitudeIdStr = (String) q.get("latitudeId");
+            Long latitudeId = Long.parseLong(latitudeIdStr);
+            String minScoreStr = (String) q.get("minScore");
+            String maxScoreStr = (String) q.get("maxScore");
+            BigDecimal minScore = new BigDecimal(minScoreStr);
+            minScore.setScale(1);
+            BigDecimal maxScore = new BigDecimal(maxScoreStr);
+            maxScore.setScale(1);
+            String descStr = (String) q.get("desc");
+
+            String scoreIdStr = (String) q.get("scoreId");
+            if (StringUtils.isNoneBlank(scoreIdStr)) {
+                //更新
+                isUpdateFlag = true;
+                Long scoreId = Long.parseLong(scoreIdStr);
+                updatedIds.add(scoreId);
+
+                QuestionnaireLatitudeScoreDO scdb = new QuestionnaireLatitudeScoreDO();
+                scdb.setId(scoreId);
+                scdb.setComment(descStr);
+                scdb.setScoreMax(maxScore);
+                scdb.setScoreMin(minScore);
+                int count = questionnaireLatitudeScoreDOMapper.updateByPrimaryKeySelective(scdb);
+                JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷纬度描述更新异常", HealthException.class);
+            } else {
+                //新增
+                QuestionnaireLatitudeScoreDO scdb = new QuestionnaireLatitudeScoreDO();
+                scdb.setComment(descStr);
+                scdb.setCreatedTime(now);
+                scdb.setCreateor(userName);
+                scdb.setIsDeleted(IsDeleted.N.name());
+                scdb.setLatitudeId(latitudeId);
+                scdb.setQuestionnaireId(questionnaireId);
+                scdb.setScoreMax(maxScore);
+                scdb.setScoreMin(minScore);
+                int count = questionnaireLatitudeScoreDOMapper.insertSelective(scdb);
+                JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷纬度描述保存异常", HealthException.class);
+            }
+        }
+
+        //非更新操作
+        if (!isUpdateFlag) {
+            return;
+        }
+
+        //删除未被更新的纬度说明
+        for (QuestionnaireLatitudeScoreDO oq : oriScores) {
+            if (!updatedIds.contains(oq.getId())) {
+                oq.setAddition(oq.getAddition() + ";删除");
+                int count = questionnaireLatitudeScoreDOMapper.updateToDeleted(oq);
+                JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷纬度描述删除异常", HealthException.class);
+            }
+        }
+    }
+
+    private QuestionnaireLatitudeScore convertQuestionnaireLatitudeScore(QuestionnaireLatitudeScoreDO src) {
+        QuestionnaireLatitudeScore tar = new QuestionnaireLatitudeScore();
+        BeanUtils.copyProperties(src, tar);
+        return tar;
+    }
+
+    /**
+     * 测评问卷统计
+     */
+    public Page<Questionnaire> questionnaireAnswerSumary(String gradeNo, String title, String offSetStr,
+                                                         String lengthStr, String questionnatireType) {
+
+        //分页查询学生问卷
+        Page<Questionnaire> page = questionnaireRepository.loadPage(null, title, offSetStr, lengthStr,
+                questionnatireType, Integer.parseInt(gradeNo));
+
+        //统计问卷测评数
+        for (Questionnaire q : page.getPageData()) {
+            //已经发布才统计
+            if (QuestionnaireStatusType.PUBLISHED.name().equals(q.getCreateStatus())) {
+                q = questionnaireRepository.questionnaireSummary(q);
+            }
+        }
+
+        return page;
+    }
+
+    /**
+     * 测评年级班级学生明细
+     */
+    public JSONArray questionnaireGradeClassSummary(Long questionnaireId, int gradeNo, int classNo) {
+        //1查询学生问卷
+        Questionnaire stuQu = questionnaireRepository.loadById(questionnaireId);
+        JavaAssert.isTrue(null != stuQu, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId,
+                HealthException.class);
+
+        //2查询问卷对应的年级->班级学生用户
+        List<User> users = userRepository.loadUser(gradeNo, classNo);
+
+        //查询每个学生完成对该问卷答题
+        Set<Long> answeredStudenIds = new HashSet<Long>();
+        List<UserQuestionnaire> uqs = userQuestionnaireRepository.summaryStudentAnsweredQuestionnaire(questionnaireId);
+        if (!CollectionUtils.isEmpty(uqs)) {
+            for (UserQuestionnaire uq : uqs) {
+                answeredStudenIds.add(uq.getId());
+            }
+        }
+
+        //3查询教师对每个学生测评情况
+        List<Questionnaire> teacherQus = questionnaireRepository.loadQuestionnaire(stuQu.getSchoolYear(),
+                stuQu.getGradeNo(), QuestionnaireType.TEACHER.name(), QuestionnaireStatusType.PUBLISHED.name());
+        if (!CollectionUtils.isEmpty(teacherQus)) {
+            JavaAssert.isTrue(teacherQus.size() == 1, ReturnCode.PARAM_ILLEGLE, "同一学年统一年级有多份教师问卷",
+                    HealthException.class);
+        }
+        Questionnaire teQu = teacherQus.get(0);
+        //教师已经完成对学生测评
+        Set<Long> alreadyTestStudenIds = new HashSet<Long>();
+        List<UserQuestionnaire> teaStuAnsQus = userQuestionnaireRepository
+                .summaryStudentAnsweredQuestionnaire(teQu.getId());
+        if (!CollectionUtils.isEmpty(teaStuAnsQus)) {
+            for (UserQuestionnaire tsaq : teaStuAnsQus) {
+                alreadyTestStudenIds.add(tsaq.getId());
+            }
+        }
+
+        //4 统计人数
+
+        JSONArray sumnary = new JSONArray();
+        for (User u : users) {
+            JSONObject stu = new JSONObject();
+            stu.put("studentId", u.getId());
+            stu.put("studentName", u.getUserName());
+            stu.put("studentHeadImgUrl", u.getHeaderImg());
+            //学生自己完成测评
+            if (answeredStudenIds.contains(u.getId().longValue())) {
+                stu.put("studentAnswer", "Y");
+            } else {
+                stu.put("studentAnswer", "N");
+            }
+
+            //教师对学生完成测评
+            if (alreadyTestStudenIds.contains(u.getId().longValue())) {
+                stu.put("teacherAnswer", "Y");
+            } else {
+                stu.put("teacherAnswer", "N");
+                stu.put("teacherQuestionnaireId", teQu.getId());
+            }
+
+            //完成统计
+            sumnary.add(stu);
+        }
+
+        return sumnary;
 
     }
 
     /**
-     * 更新题目选项分数
-     * 
-     * @param questionId
-     * @param latitudedId
+     * 展示教师对学生测评问卷
+     */
+    public BaseResp showTeacherTestQuestionnaire(Long questionnaireId, Long studentId) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        JSONObject json = new JSONObject();
+        //1查询教师问卷
+        Questionnaire tq = questionnaireRepository.loadById(questionnaireId);
+        JavaAssert.isTrue(null != tq, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId, HealthException.class);
+        json.put("questionnaire", tq);
+
+        //2查询学生
+        User stu = userRepository.loadUserById(studentId);
+        JavaAssert.isTrue(null != stu, ReturnCode.DATA_NOT_EXIST, "学生不存在,id=" + studentId, HealthException.class);
+        json.put("student", stu);
+
+        //3查询问卷题目 + 选项
+        //查询问卷下所有问题
+        List<Question> questions = questionnaireRepository.loadQuestionnaireQuestions(questionnaireId);
+        if (CollectionUtils.isEmpty(questions)) {
+            json.put("questions", null);
+            return resp.setData(json);
+        }
+
+        //查询问题所有选项
+        List<QuestionOption> options = questionnaireRepository
+                .loadQuestionnaireQuestionQuestionOptions(questionnaireId);
+
+        //问卷问题组装
+        questionsMatchQuestionOption(questions, options, false);
+        json.put("questions", questions);
+        resp.setData(json);
+        return resp;
+    }
+
+    /**
+     * 保存教师测评学生结果
      */
     @Transactional
-    private void addQuestionOptionScore() {
+    public void addTeacherTestQuestionnaire(Long questionnaireId, Long studentId, String questionOptionsJson,
+                                            String userName) {
+        //1查询教师问卷
+        Questionnaire tq = questionnaireRepository.loadById(questionnaireId);
+        JavaAssert.isTrue(null != tq, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId, HealthException.class);
+        //题目总数
+        int totalQuestionCount = tq.getCount();
 
+        Date now = new Date();
+        //测评结果
+        JSONArray ja = JSONArray.parseArray(questionOptionsJson);
+        JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "测评结果为空", HealthException.class);
+        //循环结果
+        int size = ja.size();
+
+        JavaAssert.isTrue(totalQuestionCount == size, ReturnCode.DATA_NOT_EXIST,
+                "问卷题目数=" + totalQuestionCount + ",与答案数量=" + size + ",不等." + questionnaireId, HealthException.class);
+
+        UserQuestionAnswer ua = new UserQuestionAnswer();
+        ua.setCreatedTime(now);
+        ua.setCreateor(userName);
+        ua.setIsDeleted(IsDeleted.N.name());
+        ua.setQuestionnaireId(questionnaireId);
+        ua.setSchoolYear(tq.getSchoolYear());
+        ua.setUpdatedTime(now);
+        ua.setUserId(studentId);
+
+        List<UserQuestionAnswer> answers = new ArrayList<UserQuestionAnswer>();
+        for (int i = 0; i < size; i++) {
+            JSONObject q = ja.getJSONObject(i);
+            //题目
+            String questionIdStr = (String) q.get("questionId");
+            Long questionId = Long.parseLong(questionIdStr);
+            //选项
+            String optionIdStr = (String) q.get("optionId");
+            Long optionId = Long.parseLong(optionIdStr);
+
+            UserQuestionAnswer tem = new UserQuestionAnswer();
+            BeanUtils.copyProperties(ua, tem);
+            ua.setOptionId(optionId);
+            ua.setQuestionId(questionId);
+            answers.add(ua);
+        }
+
+        //更新用户答题结果
+        UserQuestionnaire uq = new UserQuestionnaire();
+        uq.setAnswerStatus(QuestionnaireAnswerStatus.DONE.name());
+        uq.setCount(size);
+        uq.setQuestionnaireId(questionnaireId);
+        uq.setUpdatedTime(now);
+        uq.setUserId(studentId);
+        uq.setAddition(userName + " 教师对学生测评完成");
+
+        userQuestionnaireRepository.saveUserQuestionAnswer(uq, answers);
+    }
+
+    /**
+     * 查询学生问卷列表
+     */
+    public JSONObject loadStudentUserQuestionnaires(Long studentId) {
+        JSONObject json = new JSONObject();
+        json.put("studentId", studentId);
+
+        List<UserQuestionnaire> list = userQuestionnaireRepository.loadStudentUserQuestionnaires(studentId);
+        if (CollectionUtils.isEmpty(list)) {
+            json.put("finished", null);
+            json.put("notFinished", null);
+            return json;
+        }
+
+        Collections.sort(list, Comparator.comparing(UserQuestionnaire::getId));
+        //已完成的
+        List<UserQuestionnaire> finishedList = new ArrayList<UserQuestionnaire>();
+        for (UserQuestionnaire uq : list) {
+            if (QuestionnaireAnswerStatus.DONE.name().equals(uq.getAnswerStatus())) {
+                finishedList.add(uq);
+            }
+        }
+
+        list.removeAll(finishedList);
+        json.put("finished", finishedList);
+        json.put("notFinished", list);
+        return json;
+    }
+
+    /**
+     * 学生开始测评问卷第一题
+     */
+    public BaseResp startStudentTestQuestionnaire(Long questionnaireId, Long studentId) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        JSONObject json = new JSONObject();
+
+        //1查询学生问卷
+        Questionnaire stuQu = questionnaireRepository.loadById(questionnaireId);
+        JavaAssert.isTrue(null != stuQu, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId,
+                HealthException.class);
+
+        //2查询问卷下所有问题
+        List<Question> questions = questionnaireRepository.loadQuestionnaireQuestions(questionnaireId);
+        if (CollectionUtils.isEmpty(questions)) {
+            json.put("question", null);
+            return resp.setData(json);
+        }
+        Collections.sort(questions, Comparator.comparing(Question::getQuestionNo));
+        Question question = questions.get(0);
+        json.put("question", question);
+
+        //3查询问题所有选项
+        List<QuestionOption> options = questionnaireRepository.loadQuestionnaireQuestionQuestionOptions(questionnaireId,
+                question.getId());
+        Collections.sort(options, Comparator.comparing(QuestionOption::getOptionNo));
+        json.put("options", options);
+
+        //4查看学习对该题目答题情况
+        Long choisedOptionId = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,
+                question.getId());
+        json.put("choised_option_id", choisedOptionId);
+
+        resp.setData(json);
+        return resp;
     }
 }

@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,8 +29,10 @@ import com.xueduoduo.health.domain.enums.ReturnCode;
 @Service
 public class LatitudeRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(LatitudeRepository.class);
+
     @Autowired
-    private LatitudeDOMapper latitudeDAO;
+    private LatitudeDOMapper    latitudeDAO;
 
     /**
      * 全部查
@@ -137,5 +141,30 @@ public class LatitudeRepository {
         ld.setIsDeleted(src.getIsDeleted());
         int count = latitudeDAO.updateByPrimaryKeySelective(ld);
         JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "纬度更新异常", HealthException.class);
+    }
+
+    @Transactional
+    public void updateToDelete(Latitude src) {
+        LatitudeDO ld = new LatitudeDO();
+        ld.setId(src.getId());
+        Date today = new Date();
+        ld.setUpdatedTime(today);
+        ld.setDisplayName(src.getDisplayName());
+        ld.setIsDeleted(src.getIsDeleted());
+
+        LatitudeDO db = latitudeDAO.selectByPrimaryKey(src.getId());
+        if (null == db || db.getIsDeleted().equals(IsDeleted.Y.name())) {
+            throw new HealthException(ReturnCode.DATA_NOT_EXIST, "该纬度不存在或已删除");
+        }
+
+        try {
+            int count = latitudeDAO.updateByPrimaryKeySelective(ld);
+            JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "纬度删除异常", HealthException.class);
+        } catch (Exception e) {
+            LatitudeDO dbInstance = latitudeDAO.selectByPrimaryKey(src.getId());
+            if (null == dbInstance) {
+                throw new HealthException(ReturnCode.DATA_NOT_EXIST, "该纬度不存在或已删除");
+            }
+        }
     }
 }

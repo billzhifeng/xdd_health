@@ -1,5 +1,6 @@
 package com.xueduoduo.health.domain.questionnaire.repository;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,14 +18,17 @@ import com.github.java.common.utils.JavaAssert;
 import com.xueduoduo.health.dal.dao.QuestionDOMapper;
 import com.xueduoduo.health.dal.dao.QuestionOptionDOMapper;
 import com.xueduoduo.health.dal.dao.QuestionnaireDOMapper;
+import com.xueduoduo.health.dal.dao.UserQuestionnaireDOMapper;
 import com.xueduoduo.health.dal.dataobject.QuestionDO;
 import com.xueduoduo.health.dal.dataobject.QuestionDOExample;
 import com.xueduoduo.health.dal.dataobject.QuestionOptionDO;
 import com.xueduoduo.health.dal.dataobject.QuestionOptionDOExample;
 import com.xueduoduo.health.dal.dataobject.QuestionnaireDO;
 import com.xueduoduo.health.dal.dataobject.QuestionnaireDOExample;
+import com.xueduoduo.health.dal.dataobject.UserQuestionnaireDOExample;
 import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.IsDeleted;
+import com.xueduoduo.health.domain.enums.QuestionnaireAnswerStatus;
 import com.xueduoduo.health.domain.enums.QuestionnaireStatusType;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.questionnaire.Question;
@@ -38,13 +42,16 @@ import com.xueduoduo.health.domain.questionnaire.Questionnaire;
 @Service
 public class QuestionnaireRepository {
     @Autowired
-    private QuestionnaireDOMapper  dao;
+    private QuestionnaireDOMapper     dao;
 
     @Autowired
-    private QuestionDOMapper       questionDOMapper;
+    private QuestionDOMapper          questionDOMapper;
 
     @Autowired
-    private QuestionOptionDOMapper questionOptionDOMapper;
+    private QuestionOptionDOMapper    questionOptionDOMapper;
+
+    @Autowired
+    private UserQuestionnaireDOMapper userQuestionnaireDOMapper;
 
     /**
      * 分页查
@@ -52,8 +59,8 @@ public class QuestionnaireRepository {
      * @param req
      * @return
      */
-    public Page<Questionnaire> loadPage(String schoolYear, String title, String offSetStr, String lengthStr) {
-
+    public Page<Questionnaire> loadPage(String schoolYear, String title, String offSetStr, String lengthStr,
+                                        String questionnaireType, Integer gradeNo) {
         Page<Questionnaire> page = new Page<Questionnaire>();
 
         QuestionnaireDOExample example = new QuestionnaireDOExample();
@@ -95,6 +102,10 @@ public class QuestionnaireRepository {
 
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
 
+        if (StringUtils.isNoneBlank(questionnaireType)) {
+            cri.andQuestionnaireTypeEqualTo(questionnaireType);
+        }
+
         List<QuestionnaireDO> dos = dao.selectByExample(example);
         List<Questionnaire> list = new ArrayList<Questionnaire>();
         for (QuestionnaireDO src : dos) {
@@ -103,6 +114,11 @@ public class QuestionnaireRepository {
         page.setPageData(list);
         page.setTotalCountNum((int) counts);
         return page;
+    }
+
+    public Page<Questionnaire> loadPage(String schoolYear, String title, String offSetStr, String lengthStr) {
+
+        return loadPage(schoolYear, title, offSetStr, lengthStr, null, null);
     }
 
     /**
@@ -118,6 +134,34 @@ public class QuestionnaireRepository {
         Questionnaire tar = new Questionnaire();
         BeanUtils.copyProperties(src, tar);
         return tar;
+    }
+
+    /**
+     * 查询问卷
+     * 
+     * @param schoolYear
+     * @param gradeNo
+     * @param questionnaireType
+     * @param questionnaireStatusType
+     */
+    public List<Questionnaire> loadQuestionnaire(String schoolYear, int gradeNo, String questionnaireType,
+                                                 String questionnaireStatusType) {
+
+        QuestionnaireDOExample example = new QuestionnaireDOExample();
+        QuestionnaireDOExample.Criteria cri = example.createCriteria();
+        cri.andSchoolYearEqualTo(schoolYear);
+        cri.andGradeNoEqualTo(gradeNo);
+        cri.andQuestionnaireTypeEqualTo(questionnaireType);
+        cri.andCreateStatusEqualTo(questionnaireStatusType);
+        List<QuestionnaireDO> qds = dao.selectByExample(example);
+
+        List<Questionnaire> list = new ArrayList<Questionnaire>();
+        if (CollectionUtils.isNotEmpty(qds)) {
+            for (QuestionnaireDO src : qds) {
+                list.add(convert(src));
+            }
+        }
+        return list;
     }
 
     /**
@@ -183,13 +227,13 @@ public class QuestionnaireRepository {
         ld.setCount(src.getCount());
         ld.setUpdatedTime(new Date());
         ld.setCreateStatus(QuestionnaireStatusType.PUBLISHED.name());
-        ld.setAddition(ld.getAddition() + ";" + userName + "发布该问卷");
+        ld.setAddition(ld.getAddition() + ";" + userName + "更新了该问卷");
         int count = dao.updateByPrimaryKeySelective(ld);
-        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "发布问卷异常", HealthException.class);
+        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "更新该问卷异常", HealthException.class);
     }
 
     /**
-     * 未使用:删除问卷下某一个题目后更新
+     * 删除问卷下某一个题目后更新
      */
     @Transactional
     public void updateByDeleteOneQuestion(Long id, String userName) {
@@ -264,10 +308,18 @@ public class QuestionnaireRepository {
      * 查询问卷下所有题目选项
      */
     public List<QuestionOption> loadQuestionnaireQuestionQuestionOptions(Long questionnaireId) {
+        return loadQuestionnaireQuestionQuestionOptions(questionnaireId, null);
+    }
+
+    /**
+     * 查询问卷下所有题目选项
+     */
+    public List<QuestionOption> loadQuestionnaireQuestionQuestionOptions(Long questionnaireId, Long questionId) {
         List<QuestionOption> lst = new ArrayList<QuestionOption>();
         QuestionOptionDOExample example = new QuestionOptionDOExample();
         QuestionOptionDOExample.Criteria cri = example.createCriteria();
         cri.andQuestionnaireIdGreaterThan(questionnaireId);
+        cri.andQuestionIdEqualTo(questionId);
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<QuestionOptionDO> qs = questionOptionDOMapper.selectByExample(example);
         if (CollectionUtils.isEmpty(qs)) {
@@ -284,4 +336,27 @@ public class QuestionnaireRepository {
         BeanUtils.copyProperties(src, tar);
         return tar;
     }
+
+    /**
+     * 统计问卷完成情况
+     */
+    public Questionnaire questionnaireSummary(Questionnaire q) {
+        UserQuestionnaireDOExample example = new UserQuestionnaireDOExample();
+        UserQuestionnaireDOExample.Criteria cri = example.createCriteria();
+        cri.andQuestionnaireIdEqualTo(q.getId());
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        Long totalCount = userQuestionnaireDOMapper.countByExample(example);
+
+        cri.andAnswerStatusEqualTo(QuestionnaireAnswerStatus.DONE.name());
+        Long doneCount = userQuestionnaireDOMapper.countByExample(example);
+
+        BigDecimal rate = new BigDecimal(doneCount.longValue() / totalCount.longValue());
+        rate.setScale(2);
+
+        q.setAnsweredRate(rate);
+        q.setStudentAnswerCount(doneCount.intValue());
+        q.setTotalStudentCount(totalCount.intValue());
+        return q;
+    }
+
 }

@@ -23,6 +23,8 @@ public class UserDO {
 
     private String password;
 
+    private String headerImg;
+
     private String phone;
 
     private String userStatus;
@@ -36,8 +38,6 @@ public class UserDO {
     private Date updatedTime;
 
     private String isDeleted;
-
-    private String headerImg;
 
     public Long getId() {
         return id;
@@ -119,6 +119,14 @@ public class UserDO {
         this.password = password == null ? null : password.trim();
     }
 
+    public String getHeaderImg() {
+        return headerImg;
+    }
+
+    public void setHeaderImg(String headerImg) {
+        this.headerImg = headerImg == null ? null : headerImg.trim();
+    }
+
     public String getPhone() {
         return phone;
     }
@@ -173,13 +181,5 @@ public class UserDO {
 
     public void setIsDeleted(String isDeleted) {
         this.isDeleted = isDeleted == null ? null : isDeleted.trim();
-    }
-
-    public String getHeaderImg() {
-        return headerImg;
-    }
-
-    public void setHeaderImg(String headerImg) {
-        this.headerImg = headerImg == null ? null : headerImg.trim();
     }
 }

@@ -5,8 +5,8 @@
     <id column="id" jdbcType="BIGINT" property="id" />
     <result column="questionnaire_id" jdbcType="BIGINT" property="questionnaireId" />
     <result column="latitude_id" jdbcType="BIGINT" property="latitudeId" />
-    <result column="score_min" jdbcType="INTEGER" property="scoreMin" />
-    <result column="score_max" jdbcType="INTEGER" property="scoreMax" />
+    <result column="score_min" jdbcType="DECIMAL" property="scoreMin" />
+    <result column="score_max" jdbcType="DECIMAL" property="scoreMax" />
     <result column="comment" jdbcType="VARCHAR" property="comment" />
     <result column="addition" jdbcType="VARCHAR" property="addition" />
     <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
@@ -71,7 +71,7 @@
     from t_questionnaire_latitude_score
     where id = #{id,jdbcType=BIGINT}
   </select>
-  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO" useGeneratedKeys="true" keyProperty="id">
+  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO">
     insert into t_questionnaire_latitude_score
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -119,10 +119,10 @@
         #{latitudeId,jdbcType=BIGINT},
       </if>
       <if test="scoreMin != null">
-        #{scoreMin,jdbcType=INTEGER},
+        #{scoreMin,jdbcType=DECIMAL},
       </if>
       <if test="scoreMax != null">
-        #{scoreMax,jdbcType=INTEGER},
+        #{scoreMax,jdbcType=DECIMAL},
       </if>
       <if test="comment != null">
         #{comment,jdbcType=VARCHAR},
@@ -160,10 +160,10 @@
         latitude_id = #{latitudeId,jdbcType=BIGINT},
       </if>
       <if test="scoreMin != null">
-        score_min = #{scoreMin,jdbcType=INTEGER},
+        score_min = #{scoreMin,jdbcType=DECIMAL},
       </if>
       <if test="scoreMax != null">
-        score_max = #{scoreMax,jdbcType=INTEGER},
+        score_max = #{scoreMax,jdbcType=DECIMAL},
       </if>
       <if test="comment != null">
         comment = #{comment,jdbcType=VARCHAR},
@@ -186,12 +186,32 @@
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
+  
+  <update id="updateToDeleted" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO">
+    update t_questionnaire_latitude_score
+    <set>
+     
+      <if test="addition != null">
+        addition = #{addition,jdbcType=VARCHAR},
+      </if>
+     
+      <if test="updatedTime != null">
+        updated_time = #{updatedTime,jdbcType=TIMESTAMP},
+      </if>
+      
+      <if test="isDeleted != null">
+        is_deleted = #{isDeleted,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT} and is_deleted='N'
+  </update>
+  
   <update id="updateByPrimaryKey" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO">
     update t_questionnaire_latitude_score
     set questionnaire_id = #{questionnaireId,jdbcType=BIGINT},
       latitude_id = #{latitudeId,jdbcType=BIGINT},
-      score_min = #{scoreMin,jdbcType=INTEGER},
-      score_max = #{scoreMax,jdbcType=INTEGER},
+      score_min = #{scoreMin,jdbcType=DECIMAL},
+      score_max = #{scoreMax,jdbcType=DECIMAL},
       comment = #{comment,jdbcType=VARCHAR},
       addition = #{addition,jdbcType=VARCHAR},
       created_time = #{createdTime,jdbcType=TIMESTAMP},

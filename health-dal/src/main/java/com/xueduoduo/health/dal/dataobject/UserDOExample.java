@@ -795,6 +795,76 @@ public class UserDOExample {
             return (Criteria) this;
         }
 
+        public Criteria andHeaderImgIsNull() {
+            addCriterion("header_img is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgIsNotNull() {
+            addCriterion("header_img is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgEqualTo(String value) {
+            addCriterion("header_img =", value, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgNotEqualTo(String value) {
+            addCriterion("header_img <>", value, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgGreaterThan(String value) {
+            addCriterion("header_img >", value, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgGreaterThanOrEqualTo(String value) {
+            addCriterion("header_img >=", value, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgLessThan(String value) {
+            addCriterion("header_img <", value, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgLessThanOrEqualTo(String value) {
+            addCriterion("header_img <=", value, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgLike(String value) {
+            addCriterion("header_img like", value, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgNotLike(String value) {
+            addCriterion("header_img not like", value, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgIn(List<String> values) {
+            addCriterion("header_img in", values, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgNotIn(List<String> values) {
+            addCriterion("header_img not in", values, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgBetween(String value1, String value2) {
+            addCriterion("header_img between", value1, value2, "headerImg");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgNotBetween(String value1, String value2) {
+            addCriterion("header_img not between", value1, value2, "headerImg");
+            return (Criteria) this;
+        }
+
         public Criteria andPhoneIsNull() {
             addCriterion("phone is null");
             return (Criteria) this;
@@ -1297,6 +1367,11 @@ public class UserDOExample {
 
         public Criteria andPasswordLikeInsensitive(String value) {
             addCriterion("upper(password) like", value.toUpperCase(), "password");
+            return (Criteria) this;
+        }
+
+        public Criteria andHeaderImgLikeInsensitive(String value) {
+            addCriterion("upper(header_img) like", value.toUpperCase(), "headerImg");
             return (Criteria) this;
         }
 

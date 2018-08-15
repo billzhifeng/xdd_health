@@ -1,5 +1,6 @@
 package com.xueduoduo.health.dal.dataobject;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -315,52 +316,52 @@ public class QuestionnaireLatitudeScoreDOExample {
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinEqualTo(Integer value) {
+        public Criteria andScoreMinEqualTo(BigDecimal value) {
             addCriterion("score_min =", value, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinNotEqualTo(Integer value) {
+        public Criteria andScoreMinNotEqualTo(BigDecimal value) {
             addCriterion("score_min <>", value, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinGreaterThan(Integer value) {
+        public Criteria andScoreMinGreaterThan(BigDecimal value) {
             addCriterion("score_min >", value, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinGreaterThanOrEqualTo(Integer value) {
+        public Criteria andScoreMinGreaterThanOrEqualTo(BigDecimal value) {
             addCriterion("score_min >=", value, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinLessThan(Integer value) {
+        public Criteria andScoreMinLessThan(BigDecimal value) {
             addCriterion("score_min <", value, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinLessThanOrEqualTo(Integer value) {
+        public Criteria andScoreMinLessThanOrEqualTo(BigDecimal value) {
             addCriterion("score_min <=", value, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinIn(List<Integer> values) {
+        public Criteria andScoreMinIn(List<BigDecimal> values) {
             addCriterion("score_min in", values, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinNotIn(List<Integer> values) {
+        public Criteria andScoreMinNotIn(List<BigDecimal> values) {
             addCriterion("score_min not in", values, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinBetween(Integer value1, Integer value2) {
+        public Criteria andScoreMinBetween(BigDecimal value1, BigDecimal value2) {
             addCriterion("score_min between", value1, value2, "scoreMin");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMinNotBetween(Integer value1, Integer value2) {
+        public Criteria andScoreMinNotBetween(BigDecimal value1, BigDecimal value2) {
             addCriterion("score_min not between", value1, value2, "scoreMin");
             return (Criteria) this;
         }
@@ -375,52 +376,52 @@ public class QuestionnaireLatitudeScoreDOExample {
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxEqualTo(Integer value) {
+        public Criteria andScoreMaxEqualTo(BigDecimal value) {
             addCriterion("score_max =", value, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxNotEqualTo(Integer value) {
+        public Criteria andScoreMaxNotEqualTo(BigDecimal value) {
             addCriterion("score_max <>", value, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxGreaterThan(Integer value) {
+        public Criteria andScoreMaxGreaterThan(BigDecimal value) {
             addCriterion("score_max >", value, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxGreaterThanOrEqualTo(Integer value) {
+        public Criteria andScoreMaxGreaterThanOrEqualTo(BigDecimal value) {
             addCriterion("score_max >=", value, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxLessThan(Integer value) {
+        public Criteria andScoreMaxLessThan(BigDecimal value) {
             addCriterion("score_max <", value, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxLessThanOrEqualTo(Integer value) {
+        public Criteria andScoreMaxLessThanOrEqualTo(BigDecimal value) {
             addCriterion("score_max <=", value, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxIn(List<Integer> values) {
+        public Criteria andScoreMaxIn(List<BigDecimal> values) {
             addCriterion("score_max in", values, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxNotIn(List<Integer> values) {
+        public Criteria andScoreMaxNotIn(List<BigDecimal> values) {
             addCriterion("score_max not in", values, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxBetween(Integer value1, Integer value2) {
+        public Criteria andScoreMaxBetween(BigDecimal value1, BigDecimal value2) {
             addCriterion("score_max between", value1, value2, "scoreMax");
             return (Criteria) this;
         }
 
-        public Criteria andScoreMaxNotBetween(Integer value1, Integer value2) {
+        public Criteria andScoreMaxNotBetween(BigDecimal value1, BigDecimal value2) {
             addCriterion("score_max not between", value1, value2, "scoreMax");
             return (Criteria) this;
         }
