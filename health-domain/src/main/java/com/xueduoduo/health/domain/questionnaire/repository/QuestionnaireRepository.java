@@ -226,7 +226,20 @@ public class QuestionnaireRepository {
         ld.setIntroduction(src.getIntroduction());
         ld.setCount(src.getCount());
         ld.setUpdatedTime(new Date());
-        ld.setCreateStatus(QuestionnaireStatusType.PUBLISHED.name());
+        ld.setAddition(ld.getAddition() + ";" + userName + "更新了该问卷");
+        int count = dao.updateByPrimaryKeySelective(ld);
+        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "更新该问卷异常", HealthException.class);
+    }
+
+    /**
+     * 创建题目后更新问卷题目数量
+     */
+    @Transactional
+    public void updateToSaveQuestionsCount(Long id, int counts, String userName) {
+        QuestionnaireDO ld = new QuestionnaireDO();
+        ld.setId(id);
+        ld.setCount(counts);
+        ld.setUpdatedTime(new Date());
         ld.setAddition(ld.getAddition() + ";" + userName + "更新了该问卷");
         int count = dao.updateByPrimaryKeySelective(ld);
         JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "更新该问卷异常", HealthException.class);
@@ -286,7 +299,7 @@ public class QuestionnaireRepository {
         List<Question> lst = new ArrayList<Question>();
         QuestionDOExample example = new QuestionDOExample();
         QuestionDOExample.Criteria cri = example.createCriteria();
-        cri.andQuestionnaireIdGreaterThan(questionnaireId);
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<QuestionDO> qs = questionDOMapper.selectByExample(example);
         if (CollectionUtils.isEmpty(qs)) {
@@ -318,8 +331,10 @@ public class QuestionnaireRepository {
         List<QuestionOption> lst = new ArrayList<QuestionOption>();
         QuestionOptionDOExample example = new QuestionOptionDOExample();
         QuestionOptionDOExample.Criteria cri = example.createCriteria();
-        cri.andQuestionnaireIdGreaterThan(questionnaireId);
-        cri.andQuestionIdEqualTo(questionId);
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        if (null != questionId) {
+            cri.andQuestionIdEqualTo(questionId);
+        }
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<QuestionOptionDO> qs = questionOptionDOMapper.selectByExample(example);
         if (CollectionUtils.isEmpty(qs)) {

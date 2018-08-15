@@ -186,15 +186,15 @@ public class QuestionnaireService {
     /**
      * 更新保存问卷题目+选项
      * 
-     * @param id
+     * @param questionnaireId
      * @param questionsJsonStr
      */
     @Transactional
-    public void addQuestionnaireQuestions(Long id, String title, String introduction, String questionsJsonStr,
-                                          String userName) {
+    public void addQuestionnaireQuestions(Long questionnaireId, String title, String introduction,
+                                          String questionsJsonStr, String userName) {
         //构建问卷内容
         Questionnaire ld = new Questionnaire();
-        ld.setId(id);
+        ld.setId(questionnaireId);
         ld.setTitle(title);
         ld.setIntroduction(introduction);
 
@@ -215,7 +215,7 @@ public class QuestionnaireService {
         int size = ja.size();
         for (int i = 0; i < size; i++) {
             JSONObject q = ja.getJSONObject(i);
-            Long updateQuestionId = saveOrUpdateQuestionAndOptions(q, userName);
+            Long updateQuestionId = saveOrUpdateQuestionAndOptions(q, userName, questionnaireId);
             if (null != updateQuestionId) {
                 updateQuestionIds.add(updateQuestionId);
             }
@@ -223,7 +223,7 @@ public class QuestionnaireService {
 
         //原问卷问题列表
         List<Long> originQuestionIds = new ArrayList<Long>();
-        List<Question> questions = questionnaireRepository.loadQuestionnaireQuestions(id);
+        List<Question> questions = questionnaireRepository.loadQuestionnaireQuestions(questionnaireId);
         for (Question qn : questions) {
             originQuestionIds.add(qn.getId());
         }
@@ -235,21 +235,19 @@ public class QuestionnaireService {
         }
 
         //更新后问卷题目数量
+        questionnaireRepository.updateToSaveQuestionsCount(ld.getId(), size, userName);
         ld.setCount(size);
-        questionnaireRepository.updateToSaveQuestions(ld, userName);
     }
 
     /**
      * 保存或更新题目选项
      */
     @Transactional
-    private Long saveOrUpdateQuestionAndOptions(JSONObject q, String userName) {
+    private Long saveOrUpdateQuestionAndOptions(JSONObject q, String userName, Long questionnaireId) {
 
         String questionName = (String) q.get("questionName");
-        int questionNo = Integer.parseInt((String) q.get("questionNo"));
+        Integer questionNo = (Integer) q.get("questionNo");
         String audioUrl = (String) q.get("audioUrl");
-        String questionnaireIdStr = (String) q.get("questionnaireId");
-        Long questionnaireId = Long.parseLong(questionnaireIdStr);
 
         String questionIdStr = (String) q.get("questionId");
         if (StringUtils.isNoneBlank(questionIdStr)) {
@@ -266,9 +264,8 @@ public class QuestionnaireService {
             int count = questionDOMapper.updateByPrimaryKeySelective(qst);
             JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目更新异常", HealthException.class);
 
-            String optionsStr = (String) q.get("optionsStr");
-            JavaAssert.isTrue(StringUtils.isNoneBlank(optionsStr), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
-                    HealthException.class);
+            JSONArray ja = (JSONArray) q.get("optionsStr");
+            JavaAssert.isTrue(null != ja && ja.size() > 0, ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空", HealthException.class);
 
             //题目选项会被完全覆盖
             //查询原来所有选项
@@ -287,7 +284,6 @@ public class QuestionnaireService {
 
             //更新 或 添加选项
             //选项
-            JSONArray ja = JSONArray.parseArray(optionsStr);
             JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
                     HealthException.class);
             int size = ja.size();
@@ -295,8 +291,7 @@ public class QuestionnaireService {
 
                 JSONObject option = ja.getJSONObject(i);
                 String optionIdStr = (String) option.get("id");
-                String optionNoStr = (String) option.get("optionNo");
-                int optionNo = Integer.parseInt(optionNoStr);
+                Integer optionNo = (Integer) option.get("optionNo");
                 String displayName = (String) option.get("displayName");
 
                 if (StringUtils.isNoneBlank(optionIdStr)) {
@@ -352,20 +347,15 @@ public class QuestionnaireService {
             JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目保存异常", HealthException.class);
             Long questionId = qst.getId();
 
-            String optionsStr = (String) q.get("optionsStr");
-            JavaAssert.isTrue(StringUtils.isNoneBlank(optionsStr), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
-                    HealthException.class);
-
+            JSONArray ja = (JSONArray) q.get("optionsStr");
             //选项
-            JSONArray ja = JSONArray.parseArray(optionsStr);
             JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
                     HealthException.class);
             int size = ja.size();
             for (int i = 0; i < size; i++) {
 
                 JSONObject option = ja.getJSONObject(i);
-                String optionNoStr = (String) option.get("optionNo");
-                int optionNo = Integer.parseInt(optionNoStr);
+                Integer optionNo = (Integer) option.get("optionNo");
                 String displayName = (String) option.get("displayName");
 
                 QuestionOptionDO o = new QuestionOptionDO();

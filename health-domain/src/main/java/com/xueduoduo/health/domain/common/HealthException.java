@@ -10,6 +10,9 @@ import com.github.java.common.base.BaseException;
 public class HealthException extends BaseException {
     private static final long serialVersionUID = 1036359233490623555L;
 
+    public HealthException() {
+    }
+
     public HealthException(BaseEnum code, String msg) {
         super.setReturnCode(code.getCode());
         super.setReturnMsg(msg);
