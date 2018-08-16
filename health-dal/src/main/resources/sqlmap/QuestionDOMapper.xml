@@ -186,6 +186,22 @@
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
+  <update id="updateAddLatitude" parameterType="com.xueduoduo.health.dal.dataobject.QuestionDO">
+    update t_question
+    <set>
+     <if test="latitudeId != null">
+        latitude_id = #{latitudeId,jdbcType=BIGINT},
+      </if>
+      <if test="addition != null">
+        addition = #{addition,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedTime != null">
+        updated_time = #{updatedTime,jdbcType=TIMESTAMP},
+      </if>
+      
+    </set>
+    where id = #{id,jdbcType=BIGINT} and is_deleted = 'N'
+  </update>
   <update id="updateToDeleted" parameterType="com.xueduoduo.health.dal.dataobject.QuestionDO">
     update t_question
     <set>

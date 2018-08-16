@@ -1,6 +1,9 @@
 package com.xueduoduo.health.domain.latitude;
 
 import java.util.Date;
+import java.util.List;
+
+import com.xueduoduo.health.domain.questionnaire.QuestionnaireLatitudeScore;
 
 /**
  * 纬度
@@ -10,21 +13,23 @@ import java.util.Date;
  */
 public class Latitude {
 
-    private String schoolYear;
+    private String                           schoolYear;
 
-    private Long   id;
+    private Long                             id;
 
-    private String displayName;
+    private String                           displayName;
 
-    private String addition;
+    private String                           addition;
 
-    private Date   createdTime;
+    private Date                             createdTime;
 
-    private Date   updatedTime;
+    private Date                             updatedTime;
 
-    private String createor;
+    private String                           createor;
 
-    private String isDeleted;
+    private String                           isDeleted;
+    //问卷下纬度分数和描述
+    private List<QuestionnaireLatitudeScore> latitudeScoreDesc;
 
     public Long getId() {
         return id;
@@ -88,6 +93,14 @@ public class Latitude {
 
     public void setSchoolYear(String schoolYear) {
         this.schoolYear = schoolYear;
+    }
+
+    public List<QuestionnaireLatitudeScore> getLatitudeScoreDesc() {
+        return latitudeScoreDesc;
+    }
+
+    public void setLatitudeScoreDesc(List<QuestionnaireLatitudeScore> latitudeScoreDesc) {
+        this.latitudeScoreDesc = latitudeScoreDesc;
     }
 
 }

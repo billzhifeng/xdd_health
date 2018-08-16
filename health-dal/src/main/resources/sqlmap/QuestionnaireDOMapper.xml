@@ -237,8 +237,7 @@
     updated_time = now()  where id = #{id,jdbcType=BIGINT} and create_status !='PUBLISHED' and is_deleted='N'
   </update>
   <update id="updateByDeleteOneQuestion" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDO">
-    update t_questionnaire  set count = (count-1)
-    updated_time = now()  where id = #{id,jdbcType=BIGINT} and create_status !='PUBLISHED' and is_deleted='N'
+    update t_questionnaire  set count = (count-1),updated_time = now()  where id = #{id,jdbcType=BIGINT} and create_status !='PUBLISHED' and is_deleted='N'
   </update>
   <update id="updateByPrimaryKey" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireDO">
     update t_questionnaire

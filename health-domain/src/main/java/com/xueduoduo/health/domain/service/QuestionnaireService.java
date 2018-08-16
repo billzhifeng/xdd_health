@@ -158,10 +158,11 @@ public class QuestionnaireService {
                     qos.add(qo);
                     if (withScore) {
                         BigDecimal score = qo.getScore();
+                        score = score == null ? new BigDecimal(0) : score;
                         if (score.doubleValue() == 0 || minScore.doubleValue() > score.doubleValue()) {
                             minScore = score;
                         }
-                        maxScore = maxScore.add(qo.getScore());
+                        maxScore = maxScore.add(score);
                     }
                 }
             }
@@ -205,6 +206,13 @@ public class QuestionnaireService {
             return;
         }
 
+        //原问卷问题列表
+        List<Long> originQuestionIds = new ArrayList<Long>();
+        List<Question> questions = questionnaireRepository.loadQuestionnaireQuestions(questionnaireId);
+        for (Question qn : questions) {
+            originQuestionIds.add(qn.getId());
+        }
+
         //问卷下有问题列表
         JSONArray ja = JSONArray.parseArray(questionsJsonStr);
         JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "问卷题目为空", HealthException.class);
@@ -221,22 +229,13 @@ public class QuestionnaireService {
             }
         }
 
-        //原问卷问题列表
-        List<Long> originQuestionIds = new ArrayList<Long>();
-        List<Question> questions = questionnaireRepository.loadQuestionnaireQuestions(questionnaireId);
-        for (Question qn : questions) {
-            originQuestionIds.add(qn.getId());
-        }
         //删除此次被更新的问题
         originQuestionIds.removeAll(updateQuestionIds);
         //未被更新的问题需要被删除
         for (Long toDeleteId : originQuestionIds) {
-            new Thread(() -> updateQuestionToDeleted(toDeleteId, userName));
+            updateQuestionToDeleted(toDeleteId, userName);
         }
 
-        //更新后问卷题目数量
-        questionnaireRepository.updateToSaveQuestionsCount(ld.getId(), size, userName);
-        ld.setCount(size);
     }
 
     /**
@@ -247,20 +246,18 @@ public class QuestionnaireService {
 
         String questionName = (String) q.get("questionName");
         Integer questionNo = (Integer) q.get("questionNo");
-        String audioUrl = (String) q.get("audioUrl");
+        String audioUrl = (String) q.get("questionAudioUrl");
 
-        String questionIdStr = (String) q.get("questionId");
-        if (StringUtils.isNoneBlank(questionIdStr)) {
+        Integer questionId = (Integer) q.get("questionId");
+        if (null != questionId) {
             //更新题目
-            Long questionId = Long.parseLong(questionIdStr);
-
             Date today = new Date();
             QuestionDO qst = new QuestionDO();
             qst.setAudioUrl(audioUrl);
             qst.setUpdatedTime(today);
             qst.setQuestionName(questionName);
             qst.setQuestionNo(questionNo);
-            qst.setId(questionId);
+            qst.setId(questionId.longValue());
             int count = questionDOMapper.updateByPrimaryKeySelective(qst);
             JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目更新异常", HealthException.class);
 
@@ -271,7 +268,7 @@ public class QuestionnaireService {
             //查询原来所有选项
             QuestionOptionDOExample example = new QuestionOptionDOExample();
             QuestionOptionDOExample.Criteria cri = example.createCriteria();
-            cri.andQuestionIdEqualTo(questionId);
+            cri.andQuestionIdEqualTo(questionId.longValue());
             cri.andIsDeletedEqualTo(IsDeleted.N.name());
             List<QuestionOptionDO> list = questionOptionDOMapper.selectByExample(example);
             Map<Long, QuestionOptionDO> map = new HashMap<Long, QuestionOptionDO>();
@@ -290,28 +287,27 @@ public class QuestionnaireService {
             for (int i = 0; i < size; i++) {
 
                 JSONObject option = ja.getJSONObject(i);
-                String optionIdStr = (String) option.get("id");
+                Integer optionId = (Integer) option.get("optionId");
                 Integer optionNo = (Integer) option.get("optionNo");
-                String displayName = (String) option.get("displayName");
+                String optionName = (String) option.get("optionName");
 
-                if (StringUtils.isNoneBlank(optionIdStr)) {
-                    Long optionId = Long.parseLong(optionIdStr);
+                if (null != optionId) {
                     //更新选项
                     QuestionOptionDO o = new QuestionOptionDO();
-                    o.setDisplayName(displayName);
+                    o.setDisplayName(optionName);
                     o.setOptionNo(optionNo);
                     o.setUpdatedTime(today);
-                    o.setId(optionId);
+                    o.setId(optionId.longValue());
                     count = questionOptionDOMapper.updateByPrimaryKeySelective(o);
                     JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目选项更新异常", HealthException.class);
-                    map.remove(optionId);
+                    map.remove(optionId.longValue());
                 } else {
                     //添加选项
                     QuestionOptionDO o = new QuestionOptionDO();
-                    o.setDisplayName(displayName);
+                    o.setDisplayName(optionName);
                     o.setCreateor(userName);
                     o.setOptionNo(optionNo);
-                    o.setQuestionId(questionId);
+                    o.setQuestionId(questionId.longValue());
                     o.setQuestionnaireId(questionnaireId);
                     o.setCreateor(userName);
                     o.setCreatedTime(today);
@@ -329,7 +325,7 @@ public class QuestionnaireService {
             }
 
             //被更新的问题
-            return questionId;
+            return questionId.longValue();
         } else {
             //新增
             Date today = new Date();
@@ -345,7 +341,7 @@ public class QuestionnaireService {
 
             int count = questionDOMapper.insertSelective(qst);
             JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目保存异常", HealthException.class);
-            Long questionId = qst.getId();
+            questionId = qst.getId().intValue();
 
             JSONArray ja = (JSONArray) q.get("optionsStr");
             //选项
@@ -356,13 +352,13 @@ public class QuestionnaireService {
 
                 JSONObject option = ja.getJSONObject(i);
                 Integer optionNo = (Integer) option.get("optionNo");
-                String displayName = (String) option.get("displayName");
+                String optionName = (String) option.get("optionName");
 
                 QuestionOptionDO o = new QuestionOptionDO();
-                o.setDisplayName(displayName);
+                o.setDisplayName(optionName);
                 o.setCreateor(userName);
                 o.setOptionNo(optionNo);
-                o.setQuestionId(questionId);
+                o.setQuestionId(questionId.longValue());
                 o.setQuestionnaireId(questionnaireId);
                 o.setCreateor(userName);
                 o.setCreatedTime(today);
@@ -386,11 +382,6 @@ public class QuestionnaireService {
         QuestionDO ld = questionDOMapper.selectByPrimaryKey(id);
         JavaAssert.isTrue(null != ld, ReturnCode.DATA_NOT_EXIST, "题目不存在异常,id=" + id, HealthException.class);
 
-        ld.setIsDeleted(IsDeleted.Y.name());
-        ld.setAddition(ld.getAddition() + ";" + userName + "删除该题目");
-        int count = questionDOMapper.updateToDeleted(ld);
-        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "题目删除异常,id=" + id, HealthException.class);
-
         //2.删除题目下所有选项
         QuestionOptionDOExample example = new QuestionOptionDOExample();
         QuestionOptionDOExample.Criteria cri = example.createCriteria();
@@ -405,6 +396,11 @@ public class QuestionnaireService {
         //3.更新问卷下题目总数
         Long questionnaireId = ld.getQuestionnaireId();
         questionnaireRepository.updateByDeleteOneQuestion(questionnaireId, userName);
+
+        ld.setIsDeleted(IsDeleted.Y.name());
+        ld.setAddition(ld.getAddition() + ";" + userName + "删除该题目");
+        int count = questionDOMapper.updateToDeleted(ld);
+        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "题目删除异常,id=" + id, HealthException.class);
     }
 
     /**
@@ -422,10 +418,10 @@ public class QuestionnaireService {
         JSONArray steps = new JSONArray();
         btns.add("next_btn");
         btns.add("pre_btn");
-        steps.add(1, "question_set_step");
-        steps.add(2, "score_set_step");
+        steps.add(0, "question_set_step");
+        steps.add(1, "score_set_step");
         if (QuestionnaireType.STUDENT.name().equals(qe.getQuestionnaireType())) {//学生问卷
-            steps.add(3, "latitude_set_step");
+            steps.add(2, "latitude_set_step");
         } else {
             btns.add("publish_btn");//教师问卷有发布按钮
         }
@@ -471,30 +467,25 @@ public class QuestionnaireService {
         for (int i = 0; i < size; i++) {
             //每个题
             JSONObject q = ja.getJSONObject(i);
-            String questionIdStr = (String) q.get("questionId");
-            String latitudeIdStr = (String) q.get("latitudeId");
             //题目Id
-            Long questionId = Long.parseLong(questionIdStr);
+            Integer questionId = (Integer) q.get("questionId");
             //纬度Id
-            Long latitudeId = Long.parseLong(latitudeIdStr);
+            Integer latitudeId = (Integer) q.get("latitudeId");
 
             //更新题目纬度
             QuestionDO question = new QuestionDO();
-            question.setId(questionId);
-            question.setLatitudeId(latitudeId);
+            question.setId(questionId.longValue());
+            question.setLatitudeId(latitudeId.longValue());
             question.setUpdatedTime(now);
             question.setAddition(userName + "设置题目纬度");
-            int qCount = questionDOMapper.updateByPrimaryKeySelective(question);
-            JavaAssert.isTrue(1 == qCount, ReturnCode.PARAM_ILLEGLE, "问卷题目纬度更新异常", HealthException.class);
 
-            //每个题目下的所有选项
-            String optionsStr = (String) q.get("optionsStr");
-            JavaAssert.isTrue(StringUtils.isNoneBlank(optionsStr), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
+            int qCount = questionDOMapper.updateAddLatitude(question);
+            JavaAssert.isTrue(1 == qCount, ReturnCode.PARAM_ILLEGLE, "问卷题目纬度更新异常,题目ID=" + questionId,
                     HealthException.class);
 
-            //问题所有选项
-            JSONArray ops = JSONArray.parseArray(optionsStr);
-            JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
+            //每个题目下的所有选项
+            JSONArray ops = (JSONArray) q.get("optionsStr");
+            JavaAssert.isTrue((null != ops && ops.size() > 0), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
                     HealthException.class);
 
             //更新每个选项分数+纬度
@@ -502,17 +493,15 @@ public class QuestionnaireService {
             for (int j = 0; j < opsSize; j++) {
 
                 JSONObject option = ops.getJSONObject(j);
-                String optionIdStr = (String) option.get("optionId");
-                Long optionId = Long.parseLong(optionIdStr);
-                String scoreStr = (String) option.get("score");
-                BigDecimal score = new BigDecimal(scoreStr);
+                Integer optionId = (Integer) option.get("optionId");
+                BigDecimal score = (BigDecimal) option.get("score");
                 score.setScale(1);//1位小数
 
                 QuestionOptionDO o = new QuestionOptionDO();
-                o.setId(optionId);
+                o.setId(optionId.longValue());
                 o.setScore(score);
                 o.setUpdatedTime(now);
-                o.setLatitudeId(latitudeId);
+                o.setLatitudeId(latitudeId.longValue());
                 o.setAddition(o.getAddition() + ";设置分数");
                 int count = questionOptionDOMapper.updateByPrimaryKeySelective(o);
                 JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目选项分数保存异常", HealthException.class);
@@ -523,7 +512,7 @@ public class QuestionnaireService {
     /**
      * 学生问卷展示添加问卷纬度描述设置
      */
-    public void showQuestionnaireLatitudeDesc(Long questionnaireId) {
+    public BaseResp showQuestionnaireLatitudeDesc(Long questionnaireId) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         JSONObject json = new JSONObject();
         //查询问卷
@@ -534,9 +523,9 @@ public class QuestionnaireService {
         JSONArray btns = new JSONArray();
         JSONArray steps = new JSONArray();
 
-        steps.add(1, "question_set_step");
-        steps.add(2, "score_set_step");
-        steps.add(3, "latitude_set_step");
+        steps.add(0, "question_set_step");
+        steps.add(1, "score_set_step");
+        steps.add(2, "latitude_set_step");
 
         btns.add("publish_btn");//教师问卷有发布按钮
         btns.add("pre_btn");
@@ -552,7 +541,8 @@ public class QuestionnaireService {
         QuestionDOExample.Criteria qcri = qea.createCriteria();
         qcri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<QuestionDO> qs = questionDOMapper.selectByExample(qea);
-        JavaAssert.isTrue(!CollectionUtils.isEmpty(qs), ReturnCode.PARAM_ILLEGLE, "题目未设置纬度", HealthException.class);
+        JavaAssert.isTrue(!CollectionUtils.isEmpty(qs), ReturnCode.PARAM_ILLEGLE, "文件无题目无法设置纬度描述",
+                HealthException.class);
         for (QuestionDO q : qs) {
             latIds.add(q.getLatitudeId());
         }
@@ -564,22 +554,30 @@ public class QuestionnaireService {
             }
         }
 
-        json.put("latitudes", latitudes);
-
         //查询纬度设置
         QuestionnaireLatitudeScoreDOExample example = new QuestionnaireLatitudeScoreDOExample();
         QuestionnaireLatitudeScoreDOExample.Criteria cri = example.createCriteria();
         cri.andQuestionnaireIdEqualTo(questionnaireId);
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<QuestionnaireLatitudeScoreDO> scores = questionnaireLatitudeScoreDOMapper.selectByExample(example);
+        if (CollectionUtils.isNotEmpty(scores)) {
+            Collections.sort(scores, Comparator.comparing(QuestionnaireLatitudeScoreDO::getLatitudeId)
+                    .thenComparing(QuestionnaireLatitudeScoreDO::getScoreMin));
 
-        Collections.sort(scores, Comparator.comparing(QuestionnaireLatitudeScoreDO::getLatitudeId)
-                .thenComparing(QuestionnaireLatitudeScoreDO::getScoreMin));
-
-        List<QuestionnaireLatitudeScore> scoreList = new ArrayList<QuestionnaireLatitudeScore>();
-        for (QuestionnaireLatitudeScoreDO src : scores) {
-            scoreList.add(convertQuestionnaireLatitudeScore(src));
+            for (Latitude la : latitudes) {
+                List<QuestionnaireLatitudeScore> scoreList = new ArrayList<QuestionnaireLatitudeScore>();
+                for (QuestionnaireLatitudeScoreDO src : scores) {
+                    if (src.getLatitudeId().longValue() == la.getId()) {
+                        scoreList.add(convertQuestionnaireLatitudeScore(src));
+                    }
+                }
+                la.setLatitudeScoreDesc(scoreList);
+            }
         }
+
+        json.put("latitudes", latitudes);
+        resp.setData(json);
+        return resp;
     }
 
     /**
@@ -609,25 +607,21 @@ public class QuestionnaireService {
             //描述
             JSONObject q = ja.getJSONObject(i);
             //纬度Id
-            String latitudeIdStr = (String) q.get("latitudeId");
-            Long latitudeId = Long.parseLong(latitudeIdStr);
-            String minScoreStr = (String) q.get("minScore");
-            String maxScoreStr = (String) q.get("maxScore");
-            BigDecimal minScore = new BigDecimal(minScoreStr);
+            Integer latitudeId = (Integer) q.get("latitudeId");
+            BigDecimal minScore = (BigDecimal) q.get("minScore");
+            BigDecimal maxScore = (BigDecimal) q.get("maxScore");
             minScore.setScale(1);
-            BigDecimal maxScore = new BigDecimal(maxScoreStr);
             maxScore.setScale(1);
             String descStr = (String) q.get("desc");
 
-            String scoreIdStr = (String) q.get("scoreId");
-            if (StringUtils.isNoneBlank(scoreIdStr)) {
+            Integer scoreId = (Integer) q.get("scoreId");
+            if (null != scoreId) {
                 //更新
                 isUpdateFlag = true;
-                Long scoreId = Long.parseLong(scoreIdStr);
-                updatedIds.add(scoreId);
+                updatedIds.add(scoreId.longValue());
 
                 QuestionnaireLatitudeScoreDO scdb = new QuestionnaireLatitudeScoreDO();
-                scdb.setId(scoreId);
+                scdb.setId(scoreId.longValue());
                 scdb.setComment(descStr);
                 scdb.setScoreMax(maxScore);
                 scdb.setScoreMin(minScore);
@@ -640,7 +634,7 @@ public class QuestionnaireService {
                 scdb.setCreatedTime(now);
                 scdb.setCreateor(userName);
                 scdb.setIsDeleted(IsDeleted.N.name());
-                scdb.setLatitudeId(latitudeId);
+                scdb.setLatitudeId(latitudeId.longValue());
                 scdb.setQuestionnaireId(questionnaireId);
                 scdb.setScoreMax(maxScore);
                 scdb.setScoreMin(minScore);

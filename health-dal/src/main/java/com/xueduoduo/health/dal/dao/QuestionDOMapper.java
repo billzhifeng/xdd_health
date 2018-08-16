@@ -16,6 +16,8 @@ public interface QuestionDOMapper {
 
     int updateByPrimaryKeySelective(QuestionDO record);
 
+    int updateAddLatitude(QuestionDO record);
+
     int updateToDeleted(QuestionDO record);
 
     int updateByPrimaryKey(QuestionDO record);

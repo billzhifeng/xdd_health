@@ -298,7 +298,7 @@ public class QuestionnaireController {
             JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
                     HealthException.class);
 
-            questionnaireService.showQuestionnaireLatitudeDesc(Long.parseLong(idStr));
+            resp = questionnaireService.showQuestionnaireLatitudeDesc(Long.parseLong(idStr));
         } catch (Exception e) {
             logger.error("展示添加问卷纬度描述异常", e);
             resp = BaseResp.buildFailResp("展示添加问卷纬度描述异常" + e.getMessage(), BaseResp.class);
