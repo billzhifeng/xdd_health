@@ -13,7 +13,7 @@
 	<parent>
 		<groupId>com.github.project</groupId>
 		<artifactId>project-parent</artifactId>
-		<version>1.0.2018061401</version>
+		<version>1.0.2018081601</version>
 	</parent>
 
 	<dependencyManagement>
@@ -32,11 +32,6 @@
 				<groupId>com.xueduoduo.health</groupId>
 				<artifactId>health-dal</artifactId>
 				<version>${health.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.java.common.lang</groupId>
-				<artifactId>java-common-lang</artifactId>
-				<version>1.0.201808091</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

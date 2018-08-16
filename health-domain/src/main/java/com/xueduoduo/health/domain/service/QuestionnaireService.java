@@ -512,8 +512,7 @@ public class QuestionnaireService {
     /**
      * 学生问卷展示添加问卷纬度描述设置
      */
-    public BaseResp showQuestionnaireLatitudeDesc(Long questionnaireId) {
-        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+    public JSONObject showQuestionnaireLatitudeScoreAndDesc(Long questionnaireId) {
         JSONObject json = new JSONObject();
         //查询问卷
         Questionnaire qe = questionnaireRepository.loadById(questionnaireId);
@@ -576,8 +575,7 @@ public class QuestionnaireService {
         }
 
         json.put("latitudes", latitudes);
-        resp.setData(json);
-        return resp;
+        return json;
     }
 
     /**

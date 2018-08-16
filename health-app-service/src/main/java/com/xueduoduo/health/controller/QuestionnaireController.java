@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.github.java.common.base.BaseResp;
 import com.github.java.common.base.Page;
 import com.github.java.common.utils.DateUtil;
@@ -298,7 +299,8 @@ public class QuestionnaireController {
             JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
                     HealthException.class);
 
-            resp = questionnaireService.showQuestionnaireLatitudeDesc(Long.parseLong(idStr));
+            JSONObject json = questionnaireService.showQuestionnaireLatitudeScoreAndDesc(Long.parseLong(idStr));
+            resp.setData(json);
         } catch (Exception e) {
             logger.error("展示添加问卷纬度描述异常", e);
             resp = BaseResp.buildFailResp("展示添加问卷纬度描述异常" + e.getMessage(), BaseResp.class);
