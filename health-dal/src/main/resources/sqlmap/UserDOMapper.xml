@@ -3,6 +3,7 @@
 <mapper namespace="com.xueduoduo.health.dal.dao.UserDOMapper">
   <resultMap id="BaseResultMap" type="com.xueduoduo.health.dal.dataobject.UserDO">
     <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="login_name" jdbcType="VARCHAR" property="loginName" />
     <result column="role" jdbcType="CHAR" property="role" />
     <result column="user_name" jdbcType="VARCHAR" property="userName" />
     <result column="position" jdbcType="VARCHAR" property="position" />
@@ -51,9 +52,9 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, role, user_name, position, gender, account_no, student_no, grade_no, class_no, 
-    password, header_img, phone, user_status, addition, createor_id, created_time, updated_time, 
-    is_deleted
+    id, login_name, role, user_name, position, gender, account_no, student_no, grade_no, 
+    class_no, password, header_img, phone, user_status, addition, createor_id, created_time, 
+    updated_time, is_deleted
   </sql>
   <select id="selectByExample" parameterType="com.xueduoduo.health.dal.dataobject.UserDOExample" resultMap="BaseResultMap">
     select
@@ -84,6 +85,9 @@
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">
         id,
+      </if>
+      <if test="loginName != null">
+        login_name,
       </if>
       <if test="role != null">
         role,
@@ -140,6 +144,9 @@
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
         #{id,jdbcType=BIGINT},
+      </if>
+      <if test="loginName != null">
+        #{loginName,jdbcType=VARCHAR},
       </if>
       <if test="role != null">
         #{role,jdbcType=CHAR},
@@ -203,6 +210,9 @@
   <update id="updateByPrimaryKeySelective" parameterType="com.xueduoduo.health.dal.dataobject.UserDO">
     update t_user
     <set>
+      <if test="loginName != null">
+        login_name = #{loginName,jdbcType=VARCHAR},
+      </if>
       <if test="role != null">
         role = #{role,jdbcType=CHAR},
       </if>
@@ -259,7 +269,8 @@
   </update>
   <update id="updateByPrimaryKey" parameterType="com.xueduoduo.health.dal.dataobject.UserDO">
     update t_user
-    set role = #{role,jdbcType=CHAR},
+    set login_name = #{loginName,jdbcType=VARCHAR},
+      role = #{role,jdbcType=CHAR},
       user_name = #{userName,jdbcType=VARCHAR},
       position = #{position,jdbcType=VARCHAR},
       gender = #{gender,jdbcType=CHAR},

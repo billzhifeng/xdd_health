@@ -1,7 +1,9 @@
 package com.xueduoduo.health.domain.latitude;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.github.java.common.base.Page;
+import com.github.java.common.utils.DateUtil;
 import com.github.java.common.utils.JavaAssert;
 import com.xueduoduo.health.dal.dao.LatitudeDOMapper;
 import com.xueduoduo.health.dal.dataobject.LatitudeDO;
@@ -77,7 +80,7 @@ public class LatitudeRepository {
             }
         }
         //需要分页
-        if (offSet > -1 && length > 0) {
+        if (offSet > -1 && length >= 0) {
             example.setOffSet(offSet);
             example.setLength(length);
 
@@ -93,14 +96,13 @@ public class LatitudeRepository {
             displayName = "%" + displayName + "%";
             cri.andDisplayNameLike(displayName);
         }
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
 
         long counts = latitudeDAO.countByExample(example);
         if (0 == counts) {
             page.setTotalCountNum(0);
             return page;
         }
-
-        cri.andIsDeletedEqualTo(IsDeleted.N.name());
 
         List<LatitudeDO> dos = latitudeDAO.selectByExample(example);
         List<Latitude> list = new ArrayList<Latitude>();
@@ -115,11 +117,30 @@ public class LatitudeRepository {
     private Latitude convert(LatitudeDO src) {
         Latitude tar = new Latitude();
         BeanUtils.copyProperties(src, tar);
+        tar.setCreatedTimeStr(DateUtil.format(src.getCreatedTime(), DateUtil.chineseDtFormat));
+        Date now = new Date();
+        String display = "";
+
+        Calendar sysDate = new GregorianCalendar();
+        sysDate.setTime(now);
+        Calendar failDate = new GregorianCalendar();
+        failDate.setTime(src.getUpdatedTime());
+
+        long seconds = (sysDate.getTimeInMillis() - failDate.getTimeInMillis()) / 1000;
+        display = seconds + "秒前";
+        if (seconds / 60 > 0 && seconds / 60 < 60) { //超过一分钟 小于一个小时
+            display = seconds / 60 + "分钟前";
+        } else if (seconds > 3600 && (seconds / 3600) < 24) {//超过一个小时 但小于一天
+            display = seconds / (60 * 60) + "小时前";
+        } else if ((seconds / 3600) > 24) {
+            display = (seconds / 3600 / 24) + "天前";
+        }
+        tar.setUpdatedTimeStr(display);
         return tar;
     }
 
     @Transactional
-    public void save(String displayName, String year) {
+    public void save(String displayName, String year, String userName) {
         LatitudeDO ld = new LatitudeDO();
         ld.setSchoolYear(year);
         Date today = new Date();
@@ -127,6 +148,7 @@ public class LatitudeRepository {
         ld.setUpdatedTime(today);
         ld.setDisplayName(displayName);
         ld.setIsDeleted(IsDeleted.N.name());
+        ld.setCreateor(userName);
         int count = latitudeDAO.insertSelective(ld);
         JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "纬度保存异常", HealthException.class);
     }

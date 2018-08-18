@@ -14,12 +14,19 @@ import com.xueduoduo.health.domain.user.User;
 public class UserSessionUtils {
 
     public static User getUserFromSession(HttpServletRequest req) {
-        User user = (User) req.getSession().getAttribute(LoginConstant.Token_session_key);
+        User user = (User) req.getSession().getAttribute(LoginConstantStr.Token_session_key);
         //MOCK
         user = new User();
-        user.setUserName("bill");
         user.setId(1L);
+        user.setLoginName("bill");
+        user.setUserName("张三");
         user.setRole(UserRoleType.TEACHER.name());
+        user.setGender("MALE");
+        user.setGradeNo(1);
+        user.setClassNo(2);
+        user.setHeaderImg("headImgUrl");
+        user.setPhone("18012345678");
+        user.setPosition(UserRoleType.TEACHER.name());
         //MOCK
         return user;
     }

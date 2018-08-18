@@ -19,6 +19,8 @@ import com.xueduoduo.health.domain.enums.IsDeleted;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.latitude.Latitude;
 import com.xueduoduo.health.domain.latitude.LatitudeRepository;
+import com.xueduoduo.health.domain.user.User;
+import com.xueduoduo.health.login.UserSessionUtils;
 
 /**
  * @author wangzhifeng
@@ -63,7 +65,8 @@ public class LatitudeController {
             String name = (String) req.getParameter("displayName");
             JavaAssert.isTrue(StringUtils.isNotBlank(name), ReturnCode.PARAM_ILLEGLE, "纬度名不能为空", HealthException.class);
             String year = schoolYearUtils.getCurrentSchoolYear();
-            latitudeRepository.save(name, year);
+            User user = UserSessionUtils.getUserFromSession(req);
+            latitudeRepository.save(name, year, user.getUserName());
         } catch (Exception e) {
             logger.error("添加纬度异常", e);
             resp = BaseResp.buildFailResp("添加纬度异常" + e.getMessage(), BaseResp.class);

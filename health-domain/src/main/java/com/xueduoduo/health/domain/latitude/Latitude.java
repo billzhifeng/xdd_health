@@ -23,7 +23,11 @@ public class Latitude {
 
     private Date                             createdTime;
 
+    private String                           createdTimeStr;
+
     private Date                             updatedTime;
+
+    private String                           updatedTimeStr;
 
     private String                           createor;
 
@@ -101,6 +105,22 @@ public class Latitude {
 
     public void setLatitudeScoreDesc(List<QuestionnaireLatitudeScore> latitudeScoreDesc) {
         this.latitudeScoreDesc = latitudeScoreDesc;
+    }
+
+    public String getCreatedTimeStr() {
+        return createdTimeStr;
+    }
+
+    public void setCreatedTimeStr(String createdTimeStr) {
+        this.createdTimeStr = createdTimeStr;
+    }
+
+    public String getUpdatedTimeStr() {
+        return updatedTimeStr;
+    }
+
+    public void setUpdatedTimeStr(String updatedTimeStr) {
+        this.updatedTimeStr = updatedTimeStr;
     }
 
 }
