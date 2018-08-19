@@ -1,9 +1,16 @@
 package com.xueduoduo.health.domain.questionnaire.repository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,10 +21,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.github.java.common.base.Page;
+import com.github.java.common.utils.DateUtil;
 import com.github.java.common.utils.JavaAssert;
 import com.xueduoduo.health.dal.dao.QuestionDOMapper;
 import com.xueduoduo.health.dal.dao.QuestionOptionDOMapper;
 import com.xueduoduo.health.dal.dao.QuestionnaireDOMapper;
+import com.xueduoduo.health.dal.dao.QuestionnaireLatitudeScoreDOMapper;
 import com.xueduoduo.health.dal.dao.UserQuestionnaireDOMapper;
 import com.xueduoduo.health.dal.dataobject.QuestionDO;
 import com.xueduoduo.health.dal.dataobject.QuestionDOExample;
@@ -25,15 +34,19 @@ import com.xueduoduo.health.dal.dataobject.QuestionOptionDO;
 import com.xueduoduo.health.dal.dataobject.QuestionOptionDOExample;
 import com.xueduoduo.health.dal.dataobject.QuestionnaireDO;
 import com.xueduoduo.health.dal.dataobject.QuestionnaireDOExample;
+import com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO;
+import com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDOExample;
 import com.xueduoduo.health.dal.dataobject.UserQuestionnaireDOExample;
 import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.IsDeleted;
 import com.xueduoduo.health.domain.enums.QuestionnaireAnswerStatus;
 import com.xueduoduo.health.domain.enums.QuestionnaireStatusType;
+import com.xueduoduo.health.domain.enums.QuestionnaireType;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.questionnaire.Question;
 import com.xueduoduo.health.domain.questionnaire.QuestionOption;
 import com.xueduoduo.health.domain.questionnaire.Questionnaire;
+import com.xueduoduo.health.domain.utils.UpdateTimeUtils;
 
 /**
  * @author wangzhifeng
@@ -42,16 +55,18 @@ import com.xueduoduo.health.domain.questionnaire.Questionnaire;
 @Service
 public class QuestionnaireRepository {
     @Autowired
-    private QuestionnaireDOMapper     dao;
+    private QuestionnaireDOMapper              dao;
 
     @Autowired
-    private QuestionDOMapper          questionDOMapper;
+    private QuestionDOMapper                   questionDOMapper;
 
     @Autowired
-    private QuestionOptionDOMapper    questionOptionDOMapper;
+    private QuestionOptionDOMapper             questionOptionDOMapper;
 
     @Autowired
-    private UserQuestionnaireDOMapper userQuestionnaireDOMapper;
+    private UserQuestionnaireDOMapper          userQuestionnaireDOMapper;
+    @Autowired
+    private QuestionnaireLatitudeScoreDOMapper questionnaireLatitudeScoreDOMapper;
 
     /**
      * 分页查
@@ -59,23 +74,13 @@ public class QuestionnaireRepository {
      * @param req
      * @return
      */
-    public Page<Questionnaire> loadPage(String schoolYear, String title, String offSetStr, String lengthStr,
+    public Page<Questionnaire> loadPage(String schoolYear, String title, int offSet, int length,
                                         String questionnaireType, Integer gradeNo) {
         Page<Questionnaire> page = new Page<Questionnaire>();
 
         QuestionnaireDOExample example = new QuestionnaireDOExample();
         QuestionnaireDOExample.Criteria cri = example.createCriteria();
 
-        int length = -1;
-        int offSet = -1;
-        if (StringUtils.isNotBlank(offSetStr)) {
-            offSet = Integer.parseInt(offSetStr);
-            if (StringUtils.isNotBlank(lengthStr)) {
-                length = Integer.parseInt(lengthStr);
-            } else {
-                length = 10;
-            }
-        }
         //需要分页
         if (offSet > -1 && length > 0) {
             example.setOffSet(offSet);
@@ -93,17 +98,15 @@ public class QuestionnaireRepository {
             title = "%" + title + "%";
             cri.andTitleLike(title);
         }
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        if (StringUtils.isNoneBlank(questionnaireType)) {
+            cri.andQuestionnaireTypeEqualTo(questionnaireType);
+        }
 
         long counts = dao.countByExample(example);
         if (0 == counts) {
             page.setTotalCountNum(0);
             return page;
-        }
-
-        cri.andIsDeletedEqualTo(IsDeleted.N.name());
-
-        if (StringUtils.isNoneBlank(questionnaireType)) {
-            cri.andQuestionnaireTypeEqualTo(questionnaireType);
         }
 
         List<QuestionnaireDO> dos = dao.selectByExample(example);
@@ -116,7 +119,7 @@ public class QuestionnaireRepository {
         return page;
     }
 
-    public Page<Questionnaire> loadPage(String schoolYear, String title, String offSetStr, String lengthStr) {
+    public Page<Questionnaire> loadPage(String schoolYear, String title, int offSetStr, int lengthStr) {
 
         return loadPage(schoolYear, title, offSetStr, lengthStr, null, null);
     }
@@ -133,6 +136,9 @@ public class QuestionnaireRepository {
     private Questionnaire convert(QuestionnaireDO src) {
         Questionnaire tar = new Questionnaire();
         BeanUtils.copyProperties(src, tar);
+        tar.setQuestionnaireType(QuestionnaireType.parse(src.getQuestionnaireType()).getDesc());
+        tar.setCreatedTimeStr(DateUtil.format(src.getCreatedTime(), DateUtil.chineseDtFormat));
+        tar.setUpdatedTimeStr(UpdateTimeUtils.getUpdateTimeStr(src.getUpdatedTime()));
         return tar;
     }
 
@@ -172,7 +178,7 @@ public class QuestionnaireRepository {
      * @param userName
      */
     @Transactional
-    public void save(String userName, String questionnaireType) {
+    public Long save(String userName, String questionnaireType) {
         QuestionnaireDO ld = new QuestionnaireDO();
         ld.setQuestionnaireType(questionnaireType);//TEACHER教师\STUDENT学生
         Date today = new Date();
@@ -184,13 +190,14 @@ public class QuestionnaireRepository {
         ld.setIsDeleted(IsDeleted.N.name());
         int count = dao.insertSelective(ld);
         JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "问卷保存异常", HealthException.class);
+        return ld.getId();
     }
 
     /**
      * 复制问卷并保存
      */
     @Transactional
-    public void copyAndSave(Long srcId, String userName) {
+    public QuestionnaireDO copyAndSave(Long srcId, String userName) {
         QuestionnaireDO src = dao.selectByPrimaryKey(srcId);
         JavaAssert.isTrue(null != src, ReturnCode.DATA_NOT_EXIST, "id=" + srcId + "问卷不存在", HealthException.class);
 
@@ -213,6 +220,7 @@ public class QuestionnaireRepository {
 
         int count = dao.insertSelective(ld);
         JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "问卷复制保存异常", HealthException.class);
+        return ld;
     }
 
     /**
@@ -246,22 +254,16 @@ public class QuestionnaireRepository {
     }
 
     /**
-     * 删除问卷下某一个题目后更新
-     */
-    @Transactional
-    public void updateByDeleteOneQuestion(Long id, String userName) {
-        QuestionnaireDO ld = new QuestionnaireDO();
-        ld.setId(id);
-        ld.setUpdatedTime(new Date());
-        int count = dao.updateByDeleteOneQuestion(ld);
-        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "删除问卷题目异常", HealthException.class);
-    }
-
-    /**
      * 发布问卷
      */
     @Transactional
     public void updateToPublished(Questionnaire src, String userName) {
+        //发布检查
+        QuestionnaireDO qn = dao.selectByPrimaryKey(src.getId());
+        JavaAssert.isTrue(null != src, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + src.getId(), HealthException.class);
+        int questionCount = publishedCheck(src.getId(), qn);
+
+        //发布
         QuestionnaireDO ld = new QuestionnaireDO();
         ld.setId(src.getId());
         ld.setGradeNo(src.getGradeNo());
@@ -269,14 +271,172 @@ public class QuestionnaireRepository {
         ld.setEndedDate(src.getEndedDate());
         ld.setSchoolYear(src.getSchoolYear());
         ld.setUpdatedTime(new Date());
+        ld.setCount(questionCount);
         ld.setCreateStatus(QuestionnaireStatusType.PUBLISHED.name());
         ld.setAddition(ld.getAddition() + ";" + userName + "发布该问卷");
+        int count = -1;
         try {
-            int count = dao.updateByPrimaryKeySelective(ld);
-            JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "发布问卷异常", HealthException.class);
+            count = dao.updateByPrimaryKeySelective(ld);
+
         } catch (DuplicateKeyException e) {
             throw new HealthException(ReturnCode.OPERATOR_DATE_ILLEGLE, "同一学年,只能发布一个学生和一个教师问卷");
         }
+        if (count != 1) {
+            QuestionnaireDO questionnaire = dao.selectByPrimaryKey(src.getId());
+            if (!questionnaire.getCreateStatus().equals(QuestionnaireStatusType.PUBLISHED.name())) {
+                throw new HealthException(ReturnCode.OPERATOR_DATE_ILLEGLE, "问卷发布异常");
+            }
+        }
+    }
+
+    /**
+     * 发布校验
+     */
+    private int publishedCheck(Long questionnaireId, QuestionnaireDO qn) {
+        //1 有题目,题目有纬度 
+        List<QuestionDO> qs = loadQuestionsBy(questionnaireId);
+        JavaAssert.isTrue(CollectionUtils.isNotEmpty(qs), ReturnCode.PARAM_ILLEGLE,
+                "发布问卷对应的题目不能为空,问卷ID=" + questionnaireId, HealthException.class);
+        Set<Long> qIds = new HashSet<Long>();
+        for (QuestionDO qdo : qs) {
+            qIds.add(qdo.getId());
+        }
+        //2 题目有选项、有分数
+        List<QuestionOptionDO> qos = loadQestOptionAndScore(questionnaireId);
+        JavaAssert.isTrue(CollectionUtils.isNotEmpty(qos), ReturnCode.PARAM_ILLEGLE,
+                "发布问卷对应的题目选项不能为空,问卷ID=" + questionnaireId, HealthException.class);
+
+        JavaAssert.isTrue(qos.size() >= qs.size(), ReturnCode.PARAM_ILLEGLE, "发布问卷部分题目没有选项,问卷ID=" + questionnaireId,
+                HealthException.class);
+        Set<Long> qoqIds = new HashSet<Long>();
+        for (QuestionOptionDO qod : qos) {
+            qoqIds.add(qod.getQuestionId());
+        }
+
+        //问题ID 去掉 选项里的问题ID
+        qIds.removeAll(qoqIds);
+        JavaAssert.isTrue(qIds.size() == 0, ReturnCode.PARAM_ILLEGLE, "发布问卷部分题目没有选项,问卷ID=" + questionnaireId,
+                HealthException.class);
+
+        //3 学生问卷有纬度分数说明
+        if (QuestionnaireType.STUDENT.name().equals(qn.getQuestionnaireType())) {
+            //查询纬度设置
+            QuestionnaireLatitudeScoreDOExample example = new QuestionnaireLatitudeScoreDOExample();
+            QuestionnaireLatitudeScoreDOExample.Criteria cri = example.createCriteria();
+            cri.andQuestionnaireIdEqualTo(questionnaireId);
+            cri.andIsDeletedEqualTo(IsDeleted.N.name());
+            List<QuestionnaireLatitudeScoreDO> scores = questionnaireLatitudeScoreDOMapper.selectByExample(example);
+            JavaAssert.isTrue(CollectionUtils.isNotEmpty(scores), ReturnCode.PARAM_ILLEGLE,
+                    "发布问卷部纬度描述未设置,问卷ID=" + questionnaireId, HealthException.class);
+
+            //问卷纬度描述中的纬度
+            Set<Long> qlsIds = new HashSet<Long>();
+            for (QuestionnaireLatitudeScoreDO qdo : scores) {
+                qlsIds.add(qdo.getLatitudeId());
+            }
+
+            //问卷题目中的纬度
+            Set<Long> latIds = new HashSet<Long>();
+            for (QuestionDO q : qs) {
+                latIds.add(q.getLatitudeId());
+            }
+
+            latIds.removeAll(qlsIds);
+            JavaAssert.isTrue(CollectionUtils.isEmpty(latIds), ReturnCode.PARAM_ILLEGLE,
+                    "发布问卷部纬度描述未设置,问卷ID=" + questionnaireId, HealthException.class);
+        }
+        return qs.size();
+    }
+
+    /**
+     * 根据问卷ID查询问题
+     * 
+     * @param questionnaireId
+     * @return
+     */
+    private List<QuestionDO> loadQuestionsBy(Long questionnaireId) {
+        QuestionDOExample qe = new QuestionDOExample();
+        QuestionDOExample.Criteria cri = qe.createCriteria();
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<QuestionDO> questions = questionDOMapper.selectByExample(qe);
+        return questions;
+    }
+
+    /**
+     * copy 问卷问题+问卷问题选项+分数
+     * 
+     * @param questionnaireId
+     */
+    @Transactional
+    public void deepCopyQuestionnaireQuestionAndOptions(Long srcQuestionnaireId, Long newQuestionnaireId) {
+        Map<Long, Long> oldAndNewIdMap = new HashMap<Long, Long>();
+        List<QuestionDO> qds = loadQuestionsBy(srcQuestionnaireId);
+        Date now = new Date();
+        for (QuestionDO src : qds) {
+            Long oldId = src.getId();
+            src.setId(null);
+            src.setCreatedTime(now);
+            src.setUpdatedTime(now);
+            src.setQuestionnaireId(newQuestionnaireId);
+            src.setAddition("copy from id=" + oldId);
+            questionDOMapper.insertSelective(src);
+            Long newId = src.getId();
+            oldAndNewIdMap.put(oldId, newId);
+        }
+
+        List<QuestionOptionDO> qos = loadQestOptionAndScore(srcQuestionnaireId);
+        for (QuestionOptionDO src : qos) {
+            Long oId = src.getId();
+            src.setId(null);
+            src.setCreatedTime(now);
+            src.setUpdatedTime(now);
+            src.setAddition("copy from id=" + oId);
+            src.setQuestionnaireId(newQuestionnaireId);
+            src.setQuestionId(oldAndNewIdMap.get(src.getQuestionId()));
+            questionOptionDOMapper.insertSelective(src);
+        }
+    }
+
+    /**
+     * 复制问卷纬度
+     * 
+     * @param srcQuestionnaireId
+     * @param newQuestionnaireId
+     */
+    public void copyQuestionnaireLatitudeScore(Long srcQuestionnaireId, Long newQuestionnaireId) {
+        Date now = new Date();
+        //查询纬度设置
+        QuestionnaireLatitudeScoreDOExample example = new QuestionnaireLatitudeScoreDOExample();
+        QuestionnaireLatitudeScoreDOExample.Criteria cri = example.createCriteria();
+        cri.andQuestionnaireIdEqualTo(srcQuestionnaireId);
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<QuestionnaireLatitudeScoreDO> scores = questionnaireLatitudeScoreDOMapper.selectByExample(example);
+        if (CollectionUtils.isNotEmpty(scores)) {
+            Collections.sort(scores, Comparator.comparing(QuestionnaireLatitudeScoreDO::getLatitudeId)
+                    .thenComparing(QuestionnaireLatitudeScoreDO::getScoreMin));
+
+            for (QuestionnaireLatitudeScoreDO src : scores) {
+                src.setId(null);
+                src.setCreatedTime(now);
+                src.setUpdatedTime(now);
+                src.setAddition("copy from id=" + srcQuestionnaireId);
+                src.setQuestionnaireId(newQuestionnaireId);
+                questionnaireLatitudeScoreDOMapper.insertSelective(src);
+            }
+        }
+    }
+
+    /**
+     * 查询问卷题目选项和分数
+     */
+    private List<QuestionOptionDO> loadQestOptionAndScore(Long questionnaireId) {
+        QuestionOptionDOExample example = new QuestionOptionDOExample();
+        QuestionOptionDOExample.Criteria cri = example.createCriteria();
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<QuestionOptionDO> list = questionOptionDOMapper.selectByExample(example);
+        return list;
     }
 
     /**
@@ -289,7 +449,7 @@ public class QuestionnaireRepository {
         ld.setIsDeleted(IsDeleted.Y.name());
         ld.setAddition(ld.getAddition() + ";" + userName + "删除该问卷");
         int count = dao.updateToDeleted(ld);
-        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "问卷删除异常", HealthException.class);
+        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "问卷已被删除或已发布不能删除", HealthException.class);
     }
 
     /**
@@ -365,7 +525,14 @@ public class QuestionnaireRepository {
         cri.andAnswerStatusEqualTo(QuestionnaireAnswerStatus.DONE.name());
         Long doneCount = userQuestionnaireDOMapper.countByExample(example);
 
-        BigDecimal rate = new BigDecimal(doneCount.longValue() / totalCount.longValue());
+        BigDecimal rate = null;
+        if (0 == totalCount.longValue()) {
+            rate = new BigDecimal(0.00d);
+        } else {
+            BigDecimal d1 = new BigDecimal(doneCount.longValue());
+            BigDecimal d2 = new BigDecimal(totalCount.longValue());
+            rate = d1.divide(d2, 2, RoundingMode.HALF_UP);
+        }
         rate.setScale(2);
 
         q.setAnsweredRate(rate);

@@ -486,6 +486,66 @@ public class UserQuestionAnswerDOExample {
             return (Criteria) this;
         }
 
+        public Criteria andOptionNoIsNull() {
+            addCriterion("option_no is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoIsNotNull() {
+            addCriterion("option_no is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoEqualTo(Integer value) {
+            addCriterion("option_no =", value, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoNotEqualTo(Integer value) {
+            addCriterion("option_no <>", value, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoGreaterThan(Integer value) {
+            addCriterion("option_no >", value, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoGreaterThanOrEqualTo(Integer value) {
+            addCriterion("option_no >=", value, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoLessThan(Integer value) {
+            addCriterion("option_no <", value, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoLessThanOrEqualTo(Integer value) {
+            addCriterion("option_no <=", value, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoIn(List<Integer> values) {
+            addCriterion("option_no in", values, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoNotIn(List<Integer> values) {
+            addCriterion("option_no not in", values, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoBetween(Integer value1, Integer value2) {
+            addCriterion("option_no between", value1, value2, "optionNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andOptionNoNotBetween(Integer value1, Integer value2) {
+            addCriterion("option_no not between", value1, value2, "optionNo");
+            return (Criteria) this;
+        }
+
         public Criteria andSchoolYearIsNull() {
             addCriterion("school_year is null");
             return (Criteria) this;

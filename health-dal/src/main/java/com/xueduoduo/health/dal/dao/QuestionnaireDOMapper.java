@@ -16,8 +16,6 @@ public interface QuestionnaireDOMapper {
 
     int updateByPrimaryKeySelective(QuestionnaireDO record);
 
-    int updateByDeleteOneQuestion(QuestionnaireDO record);
-
     int updateToDeleted(QuestionnaireDO record);
 
     int updateByPrimaryKey(QuestionnaireDO record);

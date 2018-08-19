@@ -13,6 +13,8 @@ public class UserQuestionnaireDO {
 
     private String answerStatus;
 
+    private Date starttime;
+
     private String addition;
 
     private Date createdTime;
@@ -61,6 +63,14 @@ public class UserQuestionnaireDO {
 
     public void setAnswerStatus(String answerStatus) {
         this.answerStatus = answerStatus == null ? null : answerStatus.trim();
+    }
+
+    public Date getStarttime() {
+        return starttime;
+    }
+
+    public void setStarttime(Date starttime) {
+        this.starttime = starttime;
     }
 
     public String getAddition() {

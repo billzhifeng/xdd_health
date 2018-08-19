@@ -1,7 +1,5 @@
 package com.xueduoduo.health.login;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.xueduoduo.health.domain.enums.UserRoleType;
 import com.xueduoduo.health.domain.user.User;
 
@@ -13,8 +11,8 @@ import com.xueduoduo.health.domain.user.User;
  */
 public class UserSessionUtils {
 
-    public static User getUserFromSession(HttpServletRequest req) {
-        User user = (User) req.getSession().getAttribute(LoginConstantStr.Token_session_key);
+    public static User getUserFromSession() {
+        User user = null;//(User) req.getSession().getAttribute(LoginConstantStr.Token_session_key);
         //MOCK
         user = new User();
         user.setId(1L);

@@ -39,7 +39,7 @@ public class MenuController {
     public BaseResp menus(HttpServletRequest req) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
-            User user = UserSessionUtils.getUserFromSession(req);
+            User user = UserSessionUtils.getUserFromSession();
             List<Menu> menus = menuRepository.loadUserAllMenus(user);
             resp.setData(menus);
             logger.info("user Id:{},role:{}", user.getId(), user.getRole(), JSON.toJSONString(menus));

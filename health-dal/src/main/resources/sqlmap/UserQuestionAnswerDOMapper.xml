@@ -8,6 +8,7 @@
     <result column="question_id" jdbcType="BIGINT" property="questionId" />
     <result column="latitude_id" jdbcType="BIGINT" property="latitudeId" />
     <result column="option_id" jdbcType="BIGINT" property="optionId" />
+    <result column="option_no" jdbcType="INTEGER" property="optionNo" />
     <result column="school_year" jdbcType="VARCHAR" property="schoolYear" />
     <result column="score" jdbcType="DECIMAL" property="score" />
     <result column="addition" jdbcType="VARCHAR" property="addition" />
@@ -46,7 +47,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, user_id, questionnaire_id, question_id, latitude_id, option_id, school_year, 
+    id, user_id, questionnaire_id, question_id, latitude_id, option_id, option_no, school_year, 
     score, addition, created_time, updated_time, createor, is_deleted
   </sql>
   <select id="selectByExample" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionAnswerDOExample" resultMap="BaseResultMap">
@@ -73,7 +74,7 @@
     from t_user_question_answer
     where id = #{id,jdbcType=BIGINT}
   </select>
-  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionAnswerDO" useGeneratedKeys="true" keyProperty="id">
+  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionAnswerDO">
     insert into t_user_question_answer
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -93,6 +94,9 @@
       </if>
       <if test="optionId != null">
         option_id,
+      </if>
+      <if test="optionNo != null">
+        option_no,
       </if>
       <if test="schoolYear != null">
         school_year,
@@ -134,6 +138,9 @@
       </if>
       <if test="optionId != null">
         #{optionId,jdbcType=BIGINT},
+      </if>
+      <if test="optionNo != null">
+        #{optionNo,jdbcType=INTEGER},
       </if>
       <if test="schoolYear != null">
         #{schoolYear,jdbcType=VARCHAR},
@@ -182,6 +189,9 @@
       <if test="optionId != null">
         option_id = #{optionId,jdbcType=BIGINT},
       </if>
+      <if test="optionNo != null">
+        option_no = #{optionNo,jdbcType=INTEGER},
+      </if>
       <if test="schoolYear != null">
         school_year = #{schoolYear,jdbcType=VARCHAR},
       </if>
@@ -213,6 +223,7 @@
       question_id = #{questionId,jdbcType=BIGINT},
       latitude_id = #{latitudeId,jdbcType=BIGINT},
       option_id = #{optionId,jdbcType=BIGINT},
+      option_no = #{optionNo,jdbcType=INTEGER},
       school_year = #{schoolYear,jdbcType=VARCHAR},
       score = #{score,jdbcType=DECIMAL},
       addition = #{addition,jdbcType=VARCHAR},

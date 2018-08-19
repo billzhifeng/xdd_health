@@ -9,27 +9,27 @@ import java.util.Date;
  * @date 2018年8月11日 下午8:43:17
  */
 public class QuestionnaireLatitudeScore {
-    private Long    id;
+    private Long   id;
 
-    private Long    questionnaireId;
+    private Long   questionnaireId;
 
-    private Long    latitudeId;
+    private Long   latitudeId;
 
-    private Integer scoreMin;
+    private Double scoreMin;
 
-    private Integer scoreMax;
+    private Double scoreMax;
 
-    private String  comment;
+    private String comment;
 
-    private String  addition;
+    private String addition;
 
-    private Date    createdTime;
+    private Date   createdTime;
 
-    private Date    updatedTime;
+    private Date   updatedTime;
 
-    private String  createor;
+    private String createor;
 
-    private String  isDeleted;
+    private String isDeleted;
 
     public Long getId() {
         return id;
@@ -55,19 +55,19 @@ public class QuestionnaireLatitudeScore {
         this.latitudeId = latitudeId;
     }
 
-    public Integer getScoreMin() {
+    public Double getScoreMin() {
         return scoreMin;
     }
 
-    public void setScoreMin(Integer scoreMin) {
+    public void setScoreMin(Double scoreMin) {
         this.scoreMin = scoreMin;
     }
 
-    public Integer getScoreMax() {
+    public Double getScoreMax() {
         return scoreMax;
     }
 
-    public void setScoreMax(Integer scoreMax) {
+    public void setScoreMax(Double scoreMax) {
         this.scoreMax = scoreMax;
     }
 

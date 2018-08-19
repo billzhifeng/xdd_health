@@ -16,6 +16,8 @@ public class UserQuestionAnswerDO {
 
     private Long optionId;
 
+    private Integer optionNo;
+
     private String schoolYear;
 
     private BigDecimal score;
@@ -76,6 +78,14 @@ public class UserQuestionAnswerDO {
 
     public void setOptionId(Long optionId) {
         this.optionId = optionId;
+    }
+
+    public Integer getOptionNo() {
+        return optionNo;
+    }
+
+    public void setOptionNo(Integer optionNo) {
+        this.optionNo = optionNo;
     }
 
     public String getSchoolYear() {

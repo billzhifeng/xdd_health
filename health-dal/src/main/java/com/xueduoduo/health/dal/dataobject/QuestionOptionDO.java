@@ -16,6 +16,8 @@ public class QuestionOptionDO {
 
     private Long questionnaireId;
 
+    private String imgUrl;
+
     private Long latitudeId;
 
     private String addition;
@@ -74,6 +76,14 @@ public class QuestionOptionDO {
 
     public void setQuestionnaireId(Long questionnaireId) {
         this.questionnaireId = questionnaireId;
+    }
+
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl == null ? null : imgUrl.trim();
     }
 
     public Long getLatitudeId() {

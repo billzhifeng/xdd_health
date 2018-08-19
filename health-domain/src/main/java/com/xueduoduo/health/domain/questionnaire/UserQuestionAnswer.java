@@ -22,6 +22,8 @@ public class UserQuestionAnswer {
 
     private Long       optionId;
 
+    private Integer    optionNo;
+
     private String     schoolYear;
 
     private BigDecimal score;
@@ -139,4 +141,13 @@ public class UserQuestionAnswer {
     public void setIsDeleted(String isDeleted) {
         this.isDeleted = isDeleted == null ? null : isDeleted.trim();
     }
+
+    public Integer getOptionNo() {
+        return optionNo;
+    }
+
+    public void setOptionNo(Integer optionNo) {
+        this.optionNo = optionNo;
+    }
+
 }

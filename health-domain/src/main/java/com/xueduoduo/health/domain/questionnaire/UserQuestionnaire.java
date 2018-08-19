@@ -15,11 +15,15 @@ public class UserQuestionnaire {
 
     private Long    questionnaireId;
 
+    //已作答题目数量
     private Integer count;
 
     private String  answerStatus;
 
     private String  addition;
+
+    //开始答题时间
+    private Date    starttime;
 
     private Date    createdTime;
 
@@ -108,4 +112,13 @@ public class UserQuestionnaire {
     public void setIsDeleted(String isDeleted) {
         this.isDeleted = isDeleted == null ? null : isDeleted.trim();
     }
+
+    public Date getStarttime() {
+        return starttime;
+    }
+
+    public void setStarttime(Date starttime) {
+        this.starttime = starttime;
+    }
+
 }

@@ -7,6 +7,7 @@
     <result column="questionnaire_id" jdbcType="BIGINT" property="questionnaireId" />
     <result column="count" jdbcType="INTEGER" property="count" />
     <result column="answer_status" jdbcType="CHAR" property="answerStatus" />
+    <result column="startTime" jdbcType="TIMESTAMP" property="starttime" />
     <result column="addition" jdbcType="VARCHAR" property="addition" />
     <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
     <result column="updated_time" jdbcType="TIMESTAMP" property="updatedTime" />
@@ -43,8 +44,8 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, user_id, questionnaire_id, count, answer_status, addition, created_time, updated_time, 
-    createor, is_deleted
+    id, user_id, questionnaire_id, count, answer_status, startTime, addition, created_time, 
+    updated_time, createor, is_deleted
   </sql>
   <select id="selectByExample" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDOExample" resultMap="BaseResultMap">
     select
@@ -70,7 +71,7 @@
     from t_user_questionnaire
     where id = #{id,jdbcType=BIGINT}
   </select>
-  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO" useGeneratedKeys="true" keyProperty="id">
+  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
     insert into t_user_questionnaire
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -87,6 +88,9 @@
       </if>
       <if test="answerStatus != null">
         answer_status,
+      </if>
+      <if test="starttime != null">
+        startTime,
       </if>
       <if test="addition != null">
         addition,
@@ -119,6 +123,9 @@
       </if>
       <if test="answerStatus != null">
         #{answerStatus,jdbcType=CHAR},
+      </if>
+      <if test="starttime != null">
+        #{starttime,jdbcType=TIMESTAMP},
       </if>
       <if test="addition != null">
         #{addition,jdbcType=VARCHAR},
@@ -158,6 +165,9 @@
       <if test="answerStatus != null">
         answer_status = #{answerStatus,jdbcType=CHAR},
       </if>
+      <if test="starttime != null">
+        startTime = #{starttime,jdbcType=TIMESTAMP},
+      </if>
       <if test="addition != null">
         addition = #{addition,jdbcType=VARCHAR},
       </if>
@@ -176,12 +186,23 @@
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
+  <update id="updateAnswerCountAndOne" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
+    update t_user_questionnaire set count=(count+1),updated_time=NOW()  where id = #{id,jdbcType=BIGINT}
+  </update>
+   <update id="updateToSubmit" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
+    update t_user_questionnaire set answer_status='DONE',updated_time=NOW()  where id = #{id,jdbcType=BIGINT} and answer_status='INIT'
+  </update>
+     <update id="updateToStartAnswer" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
+    update t_user_questionnaire set startTime=NOW(),updated_time=NOW()  where id = #{id,jdbcType=BIGINT} and answer_status='INIT'
+  </update>
+  
   <update id="updateByPrimaryKey" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
     update t_user_questionnaire
     set user_id = #{userId,jdbcType=BIGINT},
       questionnaire_id = #{questionnaireId,jdbcType=BIGINT},
       count = #{count,jdbcType=INTEGER},
       answer_status = #{answerStatus,jdbcType=CHAR},
+      startTime = #{starttime,jdbcType=TIMESTAMP},
       addition = #{addition,jdbcType=VARCHAR},
       created_time = #{createdTime,jdbcType=TIMESTAMP},
       updated_time = #{updatedTime,jdbcType=TIMESTAMP},

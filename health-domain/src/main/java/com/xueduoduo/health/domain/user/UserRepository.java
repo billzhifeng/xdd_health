@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,9 +34,9 @@ public class UserRepository {
     }
 
     /**
-     * 查询年级班级学生
+     * 查询年级班级学生 +老师
      */
-    public List<User> loadUser(int gradeNo, int classNo) {
+    public List<User> loadUser(int gradeNo, int classNo, String userName, int offSet, int length, String userRole) {
         UserDOExample example = new UserDOExample();
         UserDOExample.Criteria cri = example.createCriteria();
         if (gradeNo > 0) {
@@ -44,6 +45,19 @@ public class UserRepository {
         if (classNo > 0) {
             cri.andClassNoEqualTo(classNo);
         }
+        if (StringUtils.isNoneBlank(userName)) {
+            userName = "%" + userName + "%";
+            cri.andUserNameLike(userName);
+        }
+        if (offSet > -1 && length > 0) {
+            example.setOffSet(offSet);
+            example.setLength(length);
+        }
+
+        if (StringUtils.isNotBlank(userRole)) {
+            cri.andRoleEqualTo(userRole);
+        }
+
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<UserDO> users = userDOMapper.selectByExample(example);
         List<User> list = new ArrayList<User>();
@@ -53,6 +67,13 @@ public class UserRepository {
             }
         }
         return list;
+    }
+
+    /**
+     * 查询年级班级学生 +老师
+     */
+    public List<User> loadUser(int gradeNo, int classNo) {
+        return loadUser(gradeNo, classNo, null, -1, -1, null);
     }
 
     private User convertToUser(UserDO src) {

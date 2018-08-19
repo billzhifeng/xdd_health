@@ -1,9 +1,7 @@
 package com.xueduoduo.health.domain.latitude;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -24,6 +22,7 @@ import com.xueduoduo.health.dal.dataobject.LatitudeDOExample;
 import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.IsDeleted;
 import com.xueduoduo.health.domain.enums.ReturnCode;
+import com.xueduoduo.health.domain.utils.UpdateTimeUtils;
 
 /**
  * @author wangzhifeng
@@ -62,23 +61,13 @@ public class LatitudeRepository {
      * @param req
      * @return
      */
-    public Page<Latitude> loadPage(String schoolYear, String displayName, String offSetStr, String lengthStr) {
+    public Page<Latitude> loadPage(String schoolYear, String displayName, int offSet, int length) {
 
         Page<Latitude> page = new Page<Latitude>();
 
         LatitudeDOExample example = new LatitudeDOExample();
         LatitudeDOExample.Criteria cri = example.createCriteria();
 
-        int length = -1;
-        int offSet = -1;
-        if (StringUtils.isNotBlank(offSetStr)) {
-            offSet = Integer.parseInt(offSetStr);
-            if (StringUtils.isNotBlank(lengthStr)) {
-                length = Integer.parseInt(lengthStr);
-            } else {
-                length = 10;
-            }
-        }
         //需要分页
         if (offSet > -1 && length >= 0) {
             example.setOffSet(offSet);
@@ -118,24 +107,7 @@ public class LatitudeRepository {
         Latitude tar = new Latitude();
         BeanUtils.copyProperties(src, tar);
         tar.setCreatedTimeStr(DateUtil.format(src.getCreatedTime(), DateUtil.chineseDtFormat));
-        Date now = new Date();
-        String display = "";
-
-        Calendar sysDate = new GregorianCalendar();
-        sysDate.setTime(now);
-        Calendar failDate = new GregorianCalendar();
-        failDate.setTime(src.getUpdatedTime());
-
-        long seconds = (sysDate.getTimeInMillis() - failDate.getTimeInMillis()) / 1000;
-        display = seconds + "秒前";
-        if (seconds / 60 > 0 && seconds / 60 < 60) { //超过一分钟 小于一个小时
-            display = seconds / 60 + "分钟前";
-        } else if (seconds > 3600 && (seconds / 3600) < 24) {//超过一个小时 但小于一天
-            display = seconds / (60 * 60) + "小时前";
-        } else if ((seconds / 3600) > 24) {
-            display = (seconds / 3600 / 24) + "天前";
-        }
-        tar.setUpdatedTimeStr(display);
+        tar.setUpdatedTimeStr(UpdateTimeUtils.getUpdateTimeStr(src.getUpdatedTime()));
         return tar;
     }
 

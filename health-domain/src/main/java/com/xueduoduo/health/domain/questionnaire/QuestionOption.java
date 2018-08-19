@@ -16,6 +16,8 @@ public class QuestionOption {
 
     private String     displayName;
 
+    private String     imgUrl;
+
     private BigDecimal score;
 
     private Long       questionId;
@@ -129,4 +131,13 @@ public class QuestionOption {
     public void setIsDeleted(String isDeleted) {
         this.isDeleted = isDeleted == null ? null : isDeleted.trim();
     }
+
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
+    }
+
 }

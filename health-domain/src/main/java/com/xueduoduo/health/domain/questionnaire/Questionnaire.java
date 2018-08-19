@@ -36,7 +36,10 @@ public class Questionnaire {
 
     private Date       createdTime;
 
+    private String     createdTimeStr;
+
     private Date       updatedTime;
+    private String     updatedTimeStr;
 
     private String     createor;
 
@@ -45,13 +48,13 @@ public class Questionnaire {
     //总学生人数
     private int        totalStudentCount;
     //学生未测评人数
-    private int        studentnotAnswerCount;
+    private int        studentNotAnswerCount;
     //完成测评比例
     private BigDecimal answeredRate;
 
     public int getStudentnotAnswerCount() {
-        studentnotAnswerCount = totalStudentCount - studentAnswerCount;
-        return studentnotAnswerCount;
+        studentNotAnswerCount = totalStudentCount - studentAnswerCount;
+        return studentNotAnswerCount;
     }
 
     public int getStudentAnswerCount() {
@@ -197,4 +200,25 @@ public class Questionnaire {
     public void setCreateor(String createor) {
         this.createor = createor == null ? null : createor.trim();
     }
+
+    public String getCreatedTimeStr() {
+        return createdTimeStr;
+    }
+
+    public void setCreatedTimeStr(String createdTimeStr) {
+        this.createdTimeStr = createdTimeStr;
+    }
+
+    public String getUpdatedTimeStr() {
+        return updatedTimeStr;
+    }
+
+    public void setUpdatedTimeStr(String updatedTimeStr) {
+        this.updatedTimeStr = updatedTimeStr;
+    }
+
+    public void setStudentnotAnswerCount(int studentnotAnswerCount) {
+        this.studentNotAnswerCount = studentnotAnswerCount;
+    }
+
 }

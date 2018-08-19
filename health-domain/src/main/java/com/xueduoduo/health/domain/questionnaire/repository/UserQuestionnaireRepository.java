@@ -1,6 +1,7 @@
 package com.xueduoduo.health.domain.questionnaire.repository;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -20,10 +21,15 @@ import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.IsDeleted;
 import com.xueduoduo.health.domain.enums.QuestionnaireAnswerStatus;
 import com.xueduoduo.health.domain.enums.ReturnCode;
+import com.xueduoduo.health.domain.enums.UserRoleType;
 import com.xueduoduo.health.domain.questionnaire.UserQuestionAnswer;
 import com.xueduoduo.health.domain.questionnaire.UserQuestionnaire;
+import com.xueduoduo.health.domain.user.User;
+import com.xueduoduo.health.domain.user.UserRepository;
 
 /**
+ * 用户问卷
+ * 
  * @author wangzhifeng
  * @date 2018年8月15日 上午10:56:36
  */
@@ -36,7 +42,15 @@ public class UserQuestionnaireRepository {
     @Autowired
     private UserQuestionAnswerDOMapper userQuestionAnswerDOMapper;
 
-    //查询每个学生完成问卷对答题情况
+    @Autowired
+    private UserRepository             userRepository;
+
+    /**
+     * 查询每个学生完成问卷对答题情况
+     * 
+     * @param questionnaireId
+     * @return
+     */
     public List<UserQuestionnaire> summaryStudentAnsweredQuestionnaire(Long questionnaireId) {
 
         UserQuestionnaireDOExample example = new UserQuestionnaireDOExample();
@@ -109,6 +123,12 @@ public class UserQuestionnaireRepository {
         return tar;
     }
 
+    private UserQuestionAnswer convertUserQuestionAnswerDO(UserQuestionAnswerDO src) {
+        UserQuestionAnswer tar = new UserQuestionAnswer();
+        BeanUtils.copyProperties(src, tar);
+        return tar;
+    }
+
     /**
      * 查询学生问卷
      * 
@@ -152,4 +172,130 @@ public class UserQuestionnaireRepository {
                 "题目ID=" + questionId + ",学生id=" + studentId + ",存在多个选中选项", HealthException.class);
         return answer.get(0).getId();
     }
+
+    /**
+     * 查询学生对问卷的所有答案
+     * 
+     * @param questionnaireId
+     * @param studentId
+     * @param questionId
+     */
+    public List<UserQuestionAnswer> loadUserQuestionOptionsAnswers(Long questionnaireId, Long studentId) {
+
+        UserQuestionAnswerDOExample example = new UserQuestionAnswerDOExample();
+        UserQuestionAnswerDOExample.Criteria cri = example.createCriteria();
+        cri.andUserIdEqualTo(studentId);
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<UserQuestionAnswerDO> answers = userQuestionAnswerDOMapper.selectByExample(example);
+        if (CollectionUtils.isEmpty(answers)) {
+            return null;
+        }
+
+        List<UserQuestionAnswer> list = new ArrayList<UserQuestionAnswer>();
+        for (UserQuestionAnswerDO ua : answers) {
+            list.add(convertUserQuestionAnswerDO(ua));
+        }
+        return list;
+    }
+
+    /**
+     * 生成每个学生问卷
+     */
+    @Transactional
+    public void createStudentQuestionAnswer(Long questionnaireId, int gradeNo, String userName) {
+        List<UserQuestionnaireDO> uqs = new ArrayList<UserQuestionnaireDO>();
+        //查询问卷对应的年级学生用户
+        List<User> users = userRepository.loadUser(gradeNo, -1);
+        Date now = new Date();
+        for (User u : users) {
+            if (!u.getRole().equals(UserRoleType.STUDENT.name())) {
+                continue;
+            }
+            UserQuestionnaireDO uq = new UserQuestionnaireDO();
+            uq.setAnswerStatus(QuestionnaireAnswerStatus.INIT.name());
+            uq.setCount(0);
+            uq.setCreatedTime(now);
+            uq.setUpdatedTime(now);
+            uq.setCreateor(userName);
+            uq.setIsDeleted(IsDeleted.N.name());
+            uq.setQuestionnaireId(questionnaireId);
+            uq.setUserId(u.getId());
+            userQuestionnaireDOMapper.insertSelective(uq);
+        }
+    }
+
+    /**
+     * 保存每个学生每题答案
+     */
+    @Transactional
+    public void saveStudentQuestionAnswer(UserQuestionAnswer src) {
+        UserQuestionAnswerDO tar = new UserQuestionAnswerDO();
+        BeanUtils.copyProperties(src, tar);
+
+        int count = userQuestionAnswerDOMapper.insertSelective(tar);
+        JavaAssert.isTrue(count == 1, ReturnCode.DB_ERROR, "保存学生问卷题目选项失败", tar, HealthException.class);
+
+    }
+
+    /**
+     * 更新每个学生每题答案
+     */
+    @Transactional
+    public void updateStudentQuestionAnswer(UserQuestionAnswer src) {
+        UserQuestionAnswerDO tar = new UserQuestionAnswerDO();
+        BeanUtils.copyProperties(src, tar);
+        int count = userQuestionAnswerDOMapper.updateByPrimaryKeySelective(tar);
+        JavaAssert.isTrue(count == 1, ReturnCode.DB_ERROR, "更新学生问卷题目选项失败,id=" + tar.getId(), tar,
+                HealthException.class);
+    }
+
+    /**
+     * 更新开始答卷时间
+     */
+    @Transactional
+    public void updateStudentStartAnswer(Long questionnaireId, Long studentId) {
+
+        UserQuestionnaireDO uq = loadUserQuestionnaireByQuesIdAndStudId(questionnaireId, studentId);
+        userQuestionnaireDOMapper.updateToStartAnswer(uq);
+    }
+
+    /**
+     * 答题完成
+     */
+    @Transactional
+    public void updateToSubmit(UserQuestionnaire src) {
+
+        UserQuestionnaireDO uq = convertUserQuestionnaireDO(src);
+        userQuestionnaireDOMapper.updateToSubmit(uq);
+    }
+
+    /**
+     * 更新学生答题数量+1
+     */
+    @Transactional
+    public void updateStudentAnswerCountAndOne(Long questionnaireId, Long studentId) {
+
+        UserQuestionnaireDO uq = loadUserQuestionnaireByQuesIdAndStudId(questionnaireId, studentId);
+        userQuestionnaireDOMapper.updateAnswerCountAndOne(uq);
+    }
+
+    public UserQuestionnaireDO loadUserQuestionnaireByQuesIdAndStudId(Long questionnaireId, Long studentId) {
+        UserQuestionnaireDOExample example = new UserQuestionnaireDOExample();
+        UserQuestionnaireDOExample.Criteria cri = example.createCriteria();
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        cri.andUserIdEqualTo(studentId);
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        List<UserQuestionnaireDO> uqs = userQuestionnaireDOMapper.selectByExample(example);
+        JavaAssert.isTrue(CollectionUtils.isNotEmpty(uqs), ReturnCode.DATA_NOT_EXIST, "用户问卷答题不存在",
+                HealthException.class);
+        UserQuestionnaireDO uq = uqs.get(0);
+        return uq;
+    }
+
+    public UserQuestionnaire loadUserQuestionnaireByQuesIdAndStudentId(Long questionnaireId, Long studentId) {
+        UserQuestionnaireDO uq = loadUserQuestionnaireByQuesIdAndStudId(questionnaireId, studentId);
+        return convertUserQuestionnaire(uq);
+    }
+
 }

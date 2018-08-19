@@ -8,6 +8,7 @@
     <result column="score" jdbcType="DECIMAL" property="score" />
     <result column="question_id" jdbcType="BIGINT" property="questionId" />
     <result column="questionnaire_id" jdbcType="BIGINT" property="questionnaireId" />
+    <result column="img_url" jdbcType="VARCHAR" property="imgUrl" />
     <result column="latitude_id" jdbcType="BIGINT" property="latitudeId" />
     <result column="addition" jdbcType="VARCHAR" property="addition" />
     <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
@@ -45,7 +46,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, option_no, display_name, score, question_id, questionnaire_id, latitude_id, addition, 
+    id, option_no, display_name, score, question_id, questionnaire_id, img_url, latitude_id, addition, 
     created_time, updated_time, createor, is_deleted
   </sql>
   <select id="selectByExample" parameterType="com.xueduoduo.health.dal.dataobject.QuestionOptionDOExample" resultMap="BaseResultMap">
@@ -93,6 +94,9 @@
       <if test="questionnaireId != null">
         questionnaire_id,
       </if>
+      <if test="imgUrl != null">
+        img_url,
+      </if>
       <if test="latitudeId != null">
         latitude_id,
       </if>
@@ -130,6 +134,9 @@
       </if>
       <if test="questionnaireId != null">
         #{questionnaireId,jdbcType=BIGINT},
+      </if>
+      <if test="imgUrl != null">
+        #{imgUrl,jdbcType=VARCHAR},
       </if>
       <if test="latitudeId != null">
         #{latitudeId,jdbcType=BIGINT},
@@ -175,6 +182,9 @@
       <if test="questionnaireId != null">
         questionnaire_id = #{questionnaireId,jdbcType=BIGINT},
       </if>
+      <if test="imgUrl != null">
+        img_url = #{imgUrl,jdbcType=VARCHAR},
+      </if>
       <if test="latitudeId != null">
         latitude_id = #{latitudeId,jdbcType=BIGINT},
       </if>
@@ -206,6 +216,7 @@
       score = #{score,jdbcType=DECIMAL},
       question_id = #{questionId,jdbcType=BIGINT},
       questionnaire_id = #{questionnaireId,jdbcType=BIGINT},
+      img_url = #{imgUrl,jdbcType=VARCHAR},
       latitude_id = #{latitudeId,jdbcType=BIGINT},
       addition = #{addition,jdbcType=VARCHAR},
       created_time = #{createdTime,jdbcType=TIMESTAMP},
