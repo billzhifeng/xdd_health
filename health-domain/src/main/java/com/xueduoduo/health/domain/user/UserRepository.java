@@ -1,6 +1,7 @@
 package com.xueduoduo.health.domain.user;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -8,11 +9,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.xueduoduo.health.dal.dao.UserDOMapper;
+import com.xueduoduo.health.dal.dao.UserGradeClassDOMapper;
 import com.xueduoduo.health.dal.dataobject.UserDO;
 import com.xueduoduo.health.dal.dataobject.UserDOExample;
+import com.xueduoduo.health.dal.dataobject.UserGradeClassDO;
 import com.xueduoduo.health.domain.enums.IsDeleted;
+import com.xueduoduo.health.domain.grade.GradeClass;
 
 /**
  * @author wangzhifeng
@@ -22,7 +27,10 @@ import com.xueduoduo.health.domain.enums.IsDeleted;
 public class UserRepository {
 
     @Autowired
-    private UserDOMapper userDOMapper;
+    private UserDOMapper           userDOMapper;
+
+    @Autowired
+    private UserGradeClassDOMapper userGradeClassDOMapper;
 
     public User loadUserById(Long id) {
 
@@ -31,6 +39,31 @@ public class UserRepository {
             return convertToUser(u);
         }
         return null;
+    }
+
+    @Transactional
+    public void saveUser(User u) {
+        UserDO ud = convertToUserDO(u);
+        userDOMapper.insertSelective(ud);
+    }
+
+    @Transactional
+    public void saveTeacherWithGradeAndClass(User u, List<GradeClass> gcs) {
+        saveUser(u);
+        if (CollectionUtils.isEmpty(gcs)) {
+            return;
+        }
+        for (GradeClass gc : gcs) {
+            UserGradeClassDO src = new UserGradeClassDO();
+            src.setClassNo(gc.getClassNo());
+            src.setGradeNo(gc.getGradeNo());
+            src.setUserId(u.getId());
+            src.setIsDeleted(IsDeleted.N.name());
+            src.setRole(u.getRole());
+            src.setUpdatedTime(new Date());
+            src.setCreatedTime(new Date());
+            userGradeClassDOMapper.insertSelective(src);
+        }
     }
 
     /**
@@ -78,6 +111,12 @@ public class UserRepository {
 
     private User convertToUser(UserDO src) {
         User tar = new User();
+        BeanUtils.copyProperties(src, tar);
+        return tar;
+    }
+
+    private UserDO convertToUserDO(User src) {
+        UserDO tar = new UserDO();
         BeanUtils.copyProperties(src, tar);
         return tar;
     }

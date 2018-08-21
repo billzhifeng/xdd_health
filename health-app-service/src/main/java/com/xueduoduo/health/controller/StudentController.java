@@ -35,7 +35,7 @@ public class StudentController {
     /**
      * 展示学生测评问卷列表
      */
-    @RequestMapping(value = "student/questionnaireList", method = RequestMethod.GET)
+    @RequestMapping(value = "student/questionnaireList", method = RequestMethod.POST)
     public BaseResp questionnaireList(@RequestBody StudentQuestionnairReq req) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
@@ -55,7 +55,7 @@ public class StudentController {
     /**
      * 学生开始测评第一题
      */
-    @RequestMapping(value = "student/startStudentTestQuestionnaire", method = RequestMethod.GET)
+    @RequestMapping(value = "student/startStudentTestQuestionnaire", method = RequestMethod.POST)
     public BaseResp startStudentTestQuestionnaire(@RequestBody StudentQuestionnairReq req) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
@@ -91,7 +91,7 @@ public class StudentController {
             JavaAssert.isTrue(null != req.getOptionId(), ReturnCode.PARAM_ILLEGLE, "学生测评答案选项不能为空",
                     HealthException.class);
 
-            JavaAssert.isTrue(null == req.getNextQuestionId() && null == req.getPreQuestionId(),
+            JavaAssert.isTrue(null != req.getNextQuestionId() || null != req.getPreQuestionId(),
                     ReturnCode.PARAM_ILLEGLE, "学生测评操作不能为空", HealthException.class);
 
             User user = UserSessionUtils.getUserFromSession();
@@ -133,7 +133,7 @@ public class StudentController {
             User user = UserSessionUtils.getUserFromSession();
             Long questionnaireId = req.getQuestionnaireId();
             //保存学生答案
-            resp = questionnaireService.studentSumbit(questionnaireId, req.getStudentId(), req.getQuestionnaireId(),
+            resp = questionnaireService.studentSumbit(questionnaireId, req.getStudentId(), req.getQuestionId(),
                     req.getOptionId(), req.getAnswerId());
         } catch (HealthException e) {
             logger.error("保存学生回答问卷结果异常", e);

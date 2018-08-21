@@ -185,7 +185,9 @@ public class UserQuestionnaireRepository {
         UserQuestionAnswerDOExample example = new UserQuestionAnswerDOExample();
         UserQuestionAnswerDOExample.Criteria cri = example.createCriteria();
         cri.andUserIdEqualTo(studentId);
-        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        if (null != questionnaireId) {
+            cri.andQuestionnaireIdEqualTo(questionnaireId);
+        }
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<UserQuestionAnswerDO> answers = userQuestionAnswerDOMapper.selectByExample(example);
         if (CollectionUtils.isEmpty(answers)) {

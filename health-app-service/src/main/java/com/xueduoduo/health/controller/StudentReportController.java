@@ -1,5 +1,7 @@
 package com.xueduoduo.health.controller;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -13,8 +15,12 @@ import com.github.java.common.base.BaseResp;
 import com.github.java.common.utils.JavaAssert;
 import com.xueduoduo.health.controller.dto.StudentReportReq;
 import com.xueduoduo.health.domain.common.HealthException;
+import com.xueduoduo.health.domain.enums.QuestionnaireAnswerStatus;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.enums.UserRoleType;
+import com.xueduoduo.health.domain.questionnaire.UserQuestionAnswer;
+import com.xueduoduo.health.domain.questionnaire.UserQuestionnaire;
+import com.xueduoduo.health.domain.questionnaire.repository.UserQuestionnaireRepository;
 import com.xueduoduo.health.domain.user.User;
 import com.xueduoduo.health.domain.user.UserRepository;
 
@@ -25,10 +31,12 @@ import com.xueduoduo.health.domain.user.UserRepository;
  * @date 2018年8月19日 下午7:10:36
  */
 public class StudentReportController {
-    private static final Logger logger = LoggerFactory.getLogger(StudentReportController.class);
+    private static final Logger         logger = LoggerFactory.getLogger(StudentReportController.class);
 
     @Autowired
-    private UserRepository      userRepository;
+    private UserRepository              userRepository;
+    @Autowired
+    private UserQuestionnaireRepository userQuestionnaireRepository;
 
     /**
      * 学生档案列表
@@ -42,6 +50,17 @@ public class StudentReportController {
 
             List<User> users = userRepository.loadUser(req.getGradeNo(), req.getClassNo(), req.getUserName(),
                     req.getOffSet(), req.getLength(), UserRoleType.STUDENT.name());
+
+            for (User stu : users) {
+                List<UserQuestionnaire> uqs = userQuestionnaireRepository.loadStudentUserQuestionnaires(stu.getId());
+                int count = 0;
+                for (UserQuestionnaire uq : uqs) {
+                    if (QuestionnaireAnswerStatus.DONE.name().equals(uq.getAnswerStatus())) {
+                        count++;
+                    }
+                }
+                stu.setStudentReportCount(count);
+            }
             resp.setData(users);
         } catch (HealthException e) {
             logger.error("学生档案列表查询异常", e);
@@ -66,6 +85,12 @@ public class StudentReportController {
             JavaAssert.isTrue(null != req.getStudentId(), ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
 
             //userAnswer 统计
+            List<UserQuestionAnswer> ans = userQuestionnaireRepository.loadUserQuestionOptionsAnswers(null,
+                    req.getStudentId());
+            //年 + 纬度
+            Collections.sort(ans, Comparator.comparing(UserQuestionAnswer::getSchoolYear)
+                    .thenComparing(UserQuestionAnswer::getLatitudeId));
+
         } catch (HealthException e) {
             logger.error("学生档案图查询异常", e);
             resp = BaseResp.buildFailResp("学生档案图查询异常", BaseResp.class);

@@ -45,6 +45,20 @@ public class User {
 
     private String  headerImg;
 
+    /**
+     * 已经测评数量
+     */
+    private int     studentReportCount;
+
+    private boolean isReport;
+
+    public boolean isReport() {
+        if (this.getStudentReportCount() > 0) {
+            isReport = true;
+        }
+        return isReport;
+    }
+
     public Long getId() {
         return id;
     }
@@ -195,6 +209,14 @@ public class User {
 
     public void setHeaderImg(String headerImg) {
         this.headerImg = headerImg;
+    }
+
+    public int getStudentReportCount() {
+        return studentReportCount;
+    }
+
+    public void setStudentReportCount(int studentReportCount) {
+        this.studentReportCount = studentReportCount;
     }
 
 }

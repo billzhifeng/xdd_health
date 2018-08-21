@@ -385,13 +385,14 @@ public class QuestionnaireController {
             JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
             logger.info("测评年级班级学生明细,req {}", req);
 
-            JavaAssert.isTrue(null != req.getId(), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空", HealthException.class);
+            JavaAssert.isTrue(null != req.getQuestionnaireId(), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
+                    HealthException.class);
             JavaAssert.isTrue(req.getGradeNo() > -1, ReturnCode.PARAM_ILLEGLE, "年级不能为空", HealthException.class);
             JavaAssert.isTrue(req.getClassNo() > -1, ReturnCode.PARAM_ILLEGLE, "班级不能为空", HealthException.class);
 
             JSONArray ja = questionnaireService.questionnaireGradeClassSummary(req.getQuestionnaireId(),
                     req.getGradeNo(), req.getClassNo());
-            resp.setData(ja.toJSONString());
+            resp.setData(ja);
         } catch (Exception e) {
             logger.error("展示测评问卷异常", e);
             resp = BaseResp.buildFailResp("展示测评问卷异常" + e.getMessage(), BaseResp.class);
