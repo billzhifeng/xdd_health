@@ -6,7 +6,7 @@
 		<artifactId>health-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<artifactId>health-domain-core</artifactId>
+	<artifactId>health-domain</artifactId>
 
 	<dependencies>
 		<dependency>

@@ -16,6 +16,7 @@ import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.service.QuestionnaireService;
 import com.xueduoduo.health.domain.user.User;
+import com.xueduoduo.health.domain.user.UserRepository;
 import com.xueduoduo.health.login.UserSessionUtils;
 
 /**
@@ -31,6 +32,22 @@ public class StudentController {
 
     @Autowired
     private QuestionnaireService questionnaireService;
+    @Autowired
+    private UserRepository userRepository;
+    
+    public BaseResp studentCenter(@RequestBody StudentQuestionnairReq req){
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            logger.info("展示学生个人中心,req :{}", req);
+            User u = userRepository.loadUserWithPasswdById(req.getStudentId());
+            resp.setData(u);
+        } catch (Exception e) {
+            logger.error("展示学生个人中心异常", e);
+            resp = BaseResp.buildFailResp("展示学生个人中心结果异常", BaseResp.class);
+        }
+        logger.info("展示学生个人中心,resp:{}", resp);
+        return resp;
+    }
 
     /**
      * 展示学生测评问卷列表

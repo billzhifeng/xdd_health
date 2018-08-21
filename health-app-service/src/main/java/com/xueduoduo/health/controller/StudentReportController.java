@@ -15,6 +15,7 @@ import com.xueduoduo.health.controller.dto.StudentReportReq;
 import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.enums.UserRoleType;
+import com.xueduoduo.health.domain.questionnaire.repository.UserQuestionnaireRepository;
 import com.xueduoduo.health.domain.user.User;
 import com.xueduoduo.health.domain.user.UserRepository;
 
@@ -29,6 +30,8 @@ public class StudentReportController {
 
     @Autowired
     private UserRepository      userRepository;
+    @Autowired
+    private UserQuestionnaireRepository userQuestionnaireRepository;
 
     /**
      * 学生档案列表
