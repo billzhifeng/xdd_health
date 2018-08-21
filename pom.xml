@@ -25,13 +25,18 @@
 			</dependency>
 			<dependency>
 				<groupId>com.xueduoduo.health</groupId>
-				<artifactId>health-domain-core</artifactId>
+				<artifactId>health-domain</artifactId>
 				<version>${health.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.xueduoduo.health</groupId>
 				<artifactId>health-dal</artifactId>
 				<version>${health.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>18.0</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

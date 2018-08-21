@@ -26,7 +26,7 @@ public class User {
     private Integer gradeNo;
 
     private Integer classNo;
-
+    
     private String  password;
 
     private String  phone;

@@ -11,13 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.java.common.base.Page;
+import com.github.java.common.utils.JavaAssert;
 import com.xueduoduo.health.dal.dao.UserDOMapper;
 import com.xueduoduo.health.dal.dao.UserGradeClassDOMapper;
 import com.xueduoduo.health.dal.dataobject.UserDO;
 import com.xueduoduo.health.dal.dataobject.UserDOExample;
 import com.xueduoduo.health.dal.dataobject.UserGradeClassDO;
 import com.xueduoduo.health.domain.enums.IsDeleted;
-import com.xueduoduo.health.domain.grade.GradeClass;
+import com.xueduoduo.health.domain.enums.ReturnCode;
 
 /**
  * @author wangzhifeng
@@ -28,6 +30,24 @@ public class UserRepository {
 
     @Autowired
     private UserDOMapper           userDOMapper;
+    
+    @Transactional
+    public void saveUser(User u){
+       UserDO ud = convertToUserDO(u);
+       ud.setCreatedTime(new Date());
+       ud.setUpdatedTime(new Date());
+       ud.setRole(u.getRole());
+       userDOMapper.insertSelective(ud);
+    }
+    
+    @Transactional
+    public void deleteUser(Long userId){
+        UserDO u = userDOMapper.selectByPrimaryKey(userId);
+        JavaAssert.isTrue(null!=u, ReturnCode.DATA_NOT_EXIST,"用户不存在,用户id="+userId,HealthException.class);
+        
+        u.setIsDeleted(IsDeleted.Y.name());
+        userDOMapper.updateByPrimaryKey(u);
+    }
 
     @Autowired
     private UserGradeClassDOMapper userGradeClassDOMapper;
@@ -35,12 +55,17 @@ public class UserRepository {
     public User loadUserById(Long id) {
 
         UserDO u = userDOMapper.selectByPrimaryKey(id);
-        if (null != u) {
+        JavaAssert.isTrue(null!=u, ReturnCode.DATA_NOT_EXIST,"学生不存在,学生id="+id,HealthException.class);
             return convertToUser(u);
         }
-        return null;
-    }
+    
+    public User loadUserWithPasswdById(Long id) {
 
+        UserDO u = userDOMapper.selectByPrimaryKey(id);
+        JavaAssert.isTrue(null!=u, ReturnCode.DATA_NOT_EXIST,"学生不存在,学生id="+id,HealthException.class);
+        return convertToUserWithPasswd(u);
+    }
+    
     @Transactional
     public void saveUser(User u) {
         UserDO ud = convertToUserDO(u);
@@ -69,7 +94,9 @@ public class UserRepository {
     /**
      * 查询年级班级学生 +老师
      */
-    public List<User> loadUser(int gradeNo, int classNo, String userName, int offSet, int length, String userRole) {
+    public Page<User> loadUser(int gradeNo, int classNo, String userName, int offSet,
+                               int length, String userRole,Boolean withCount) {
+        Page<User> p = new Page<User>();
         UserDOExample example = new UserDOExample();
         UserDOExample.Criteria cri = example.createCriteria();
         if (gradeNo > 0) {
@@ -85,6 +112,9 @@ public class UserRepository {
         if (offSet > -1 && length > 0) {
             example.setOffSet(offSet);
             example.setLength(length);
+            
+            p.setOffSet(offSet);
+            p.setLength(length);
         }
 
         if (StringUtils.isNotBlank(userRole)) {
@@ -92,6 +122,12 @@ public class UserRepository {
         }
 
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        if(withCount){
+            Long totalCount = userDOMapper.countByExample(example);
+            p.setTotalCountNum(totalCount.intValue());
+        }
+        
+        
         List<UserDO> users = userDOMapper.selectByExample(example);
         List<User> list = new ArrayList<User>();
         if (CollectionUtils.isNotEmpty(users)) {
@@ -99,7 +135,15 @@ public class UserRepository {
                 list.add(convertToUser(src));
             }
         }
-        return list;
+        p.setPageData(list);
+        return p;
+    }
+
+    /**
+     * 查询年级班级学生 +老师
+     */
+    public List<User> loadUser(int gradeNo, int classNo, String userName, int offSet, int length, String userRole) {
+        return loadUser(gradeNo,classNo,userName,offSet,length,userRole,false).getPageData();
     }
 
     /**
@@ -112,9 +156,18 @@ public class UserRepository {
     private User convertToUser(UserDO src) {
         User tar = new User();
         BeanUtils.copyProperties(src, tar);
+        tar.setPassword(null);
+        tar.setUserStatus("正常");
+        tar.setAddition(src.getGradeNoStr()+"年级"+src.getClassNo()+"班");
+        tar.setUserStatus("正常");
         return tar;
     }
-
+    private User convertToUserWithPasswd(UserDO src) {
+        User tar = new User();
+        BeanUtils.copyProperties(src, tar);
+        tar.setUserStatus("正常");
+        return tar;
+    }
     private UserDO convertToUserDO(User src) {
         UserDO tar = new UserDO();
         BeanUtils.copyProperties(src, tar);

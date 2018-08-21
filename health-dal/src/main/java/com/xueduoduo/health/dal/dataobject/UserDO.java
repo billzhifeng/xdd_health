@@ -108,6 +108,32 @@ public class UserDO {
     public Integer getGradeNo() {
         return gradeNo;
     }
+    public String getGradeNoStr(){
+        String desc = "";
+        switch (this.getGradeNo()) {
+            case 1:
+                desc="一";
+                break;
+            case 2:
+                desc="二";
+                break;
+            case 3:
+                desc="三";
+                break;
+            case 4:
+                desc="四";
+                break;
+            case 5:
+                desc="五";
+                break;
+            case 6:
+                desc="六";
+                break;
+            default:
+                break;
+        }
+        return desc;
+    }
 
     public void setGradeNo(Integer gradeNo) {
         this.gradeNo = gradeNo;
