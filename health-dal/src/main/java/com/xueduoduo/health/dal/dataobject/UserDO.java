@@ -3,43 +3,43 @@ package com.xueduoduo.health.dal.dataobject;
 import java.util.Date;
 
 public class UserDO {
-    private Long id;
+    private Long    id;
 
-    private String loginName;
+    private String  loginName;
 
-    private String role;
+    private String  role;
 
-    private String userName;
+    private String  userName;
 
-    private String position;
+    private String  position;
 
-    private String gender;
+    private String  gender;
 
-    private String accountNo;
+    private String  accountNo;
 
-    private String studentNo;
+    private String  studentNo;
 
     private Integer gradeNo;
 
     private Integer classNo;
 
-    private String password;
+    private String  password;
 
-    private String headerImg;
+    private String  headerImg;
 
-    private String phone;
+    private String  phone;
 
-    private String userStatus;
+    private String  userStatus;
 
-    private String addition;
+    private String  addition;
 
-    private String createorId;
+    private String  createorId;
 
-    private Date createdTime;
+    private Date    createdTime;
 
-    private Date updatedTime;
+    private Date    updatedTime;
 
-    private String isDeleted;
+    private String  isDeleted;
 
     public Long getId() {
         return id;
@@ -108,26 +108,30 @@ public class UserDO {
     public Integer getGradeNo() {
         return gradeNo;
     }
-    public String getGradeNoStr(){
+
+    public String getGradeNoStr() {
+        if (null == this.getGradeNo() || 0 == this.getGradeNo()) {
+            return null;
+        }
         String desc = "";
         switch (this.getGradeNo()) {
             case 1:
-                desc="一";
+                desc = "一";
                 break;
             case 2:
-                desc="二";
+                desc = "二";
                 break;
             case 3:
-                desc="三";
+                desc = "三";
                 break;
             case 4:
-                desc="四";
+                desc = "四";
                 break;
             case 5:
-                desc="五";
+                desc = "五";
                 break;
             case 6:
-                desc="六";
+                desc = "六";
                 break;
             default:
                 break;

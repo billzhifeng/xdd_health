@@ -3,23 +3,23 @@ package com.xueduoduo.health.dal.dataobject;
 import java.util.Date;
 
 public class UserGradeClassDO {
-    private Long id;
+    private Long    id;
 
-    private Long userId;
+    private Long    userId;
 
-    private String role;
+    private String  role;
 
     private Integer gradeNo;
 
     private Integer classNo;
 
-    private String addition;
+    private String  addition;
 
-    private Date createdTime;
+    private Date    createdTime;
 
-    private Date updatedTime;
+    private Date    updatedTime;
 
-    private String isDeleted;
+    private String  isDeleted;
 
     public Long getId() {
         return id;

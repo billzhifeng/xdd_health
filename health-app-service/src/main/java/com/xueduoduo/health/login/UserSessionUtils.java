@@ -16,7 +16,7 @@ public class UserSessionUtils {
         //MOCK
         user = new User();
         user.setId(1L);
-        user.setLoginName("bill");
+        user.setAccountNo("LV0001");
         user.setUserName("张三");
         user.setRole(UserRoleType.TEACHER.name());
         user.setGender("MALE");

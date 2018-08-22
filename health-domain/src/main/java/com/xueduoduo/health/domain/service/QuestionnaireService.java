@@ -37,6 +37,7 @@ import com.xueduoduo.health.dal.dataobject.QuestionOptionDOExample;
 import com.xueduoduo.health.dal.dataobject.QuestionnaireDO;
 import com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO;
 import com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDOExample;
+import com.xueduoduo.health.dal.dataobject.UserQuestionAnswerDO;
 import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.IsDeleted;
 import com.xueduoduo.health.domain.enums.QuestionnaireAnswerStatus;
@@ -739,7 +740,7 @@ public class QuestionnaireService {
                 HealthException.class);
 
         //2查询问卷对应的年级->班级学生用户
-        List<User> users = userRepository.loadUser(gradeNo, classNo);
+        List<User> users = userRepository.loadUser(gradeNo, classNo, "STUDENT");
 
         //查询每个学生完成对该问卷答题
         Set<Long> answeredStudenIds = new HashSet<Long>();
@@ -843,7 +844,7 @@ public class QuestionnaireService {
      * 保存教师测评学生结果
      */
     @Transactional
-    public void addTeacherTestQuestionnaire(Long questionnaireId, Long studentId, String questionOptionsJson,
+    public void addTeacherTestQuestionnaire(Long questionnaireId, Long studentId, JSONArray questionOptionsJson,
                                             String userName) {
         //1查询教师问卷
         Questionnaire tq = questionnaireRepository.loadById(questionnaireId);
@@ -853,7 +854,7 @@ public class QuestionnaireService {
 
         Date now = new Date();
         //测评结果
-        JSONArray ja = JSONArray.parseArray(questionOptionsJson);
+        JSONArray ja = questionOptionsJson;
         JavaAssert.isTrue((null != ja && ja.size() > 0), ReturnCode.PARAM_ILLEGLE, "测评结果为空", HealthException.class);
         //循环结果
         int size = ja.size();
@@ -874,17 +875,19 @@ public class QuestionnaireService {
         for (int i = 0; i < size; i++) {
             JSONObject q = ja.getJSONObject(i);
             //题目
-            String questionIdStr = (String) q.get("questionId");
-            Long questionId = Long.parseLong(questionIdStr);
+            Integer questionId = (Integer) q.get("questionId");
             //选项
-            String optionIdStr = (String) q.get("optionId");
-            Long optionId = Long.parseLong(optionIdStr);
+            Integer optionId = (Integer) q.get("optionId");
+            Integer latitudeId = (Integer) q.get("latitudeId");
+            Integer optionNo = (Integer) q.get("optionNo");
 
             UserQuestionAnswer tem = new UserQuestionAnswer();
             BeanUtils.copyProperties(ua, tem);
-            ua.setOptionId(optionId);
-            ua.setQuestionId(questionId);
-            answers.add(ua);
+            tem.setOptionId(optionId.longValue());
+            tem.setOptionNo(optionNo);
+            tem.setLatitudeId(latitudeId.longValue());
+            tem.setQuestionId(questionId.longValue());
+            answers.add(tem);
         }
 
         //更新用户答题结果
@@ -916,15 +919,20 @@ public class QuestionnaireService {
         Collections.sort(list, Comparator.comparing(UserQuestionnaire::getId));
         //已完成的
         List<UserQuestionnaire> finishedList = new ArrayList<UserQuestionnaire>();
+        List<UserQuestionnaire> notFinishedList = new ArrayList<UserQuestionnaire>();
         for (UserQuestionnaire uq : list) {
+            Questionnaire q = questionnaireRepository.loadById(uq.getQuestionnaireId());
+            uq.setQuestionnaireName(q.getTitle());
+
             if (QuestionnaireAnswerStatus.DONE.name().equals(uq.getAnswerStatus())) {
                 finishedList.add(uq);
+            } else {
+                notFinishedList.add(uq);
             }
         }
 
-        list.removeAll(finishedList);
         json.put("finished", finishedList);
-        json.put("notFinished", list);
+        json.put("notFinished", notFinishedList);
         return json;
     }
 
@@ -957,9 +965,10 @@ public class QuestionnaireService {
         json.put("options", options);
 
         //4查看学习对该题目答题情况
-        Long choisedOptionId = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,
+        UserQuestionAnswerDO userAnswer = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,
                 question.getId());
-        json.put("choised_option_id", choisedOptionId);
+        json.put("answerId", userAnswer.getId());
+        json.put("optionId", userAnswer.getOptionId());
 
         //5.操作是否有上一题、下一题
         json.put("preQuestionId", null);
@@ -1079,9 +1088,10 @@ public class QuestionnaireService {
         json.put("options", options);
 
         //6查看学习对该题目答题情况
-        Long choisedOptionId = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,
+        UserQuestionAnswerDO userAnswer = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,
                 showQuestion.getId());
-        json.put("choised_option_id", choisedOptionId);
+        json.put("answerId", userAnswer.getId());
+        json.put("optionId", userAnswer.getOptionId());
         resp.setData(json);
         return resp;
     }

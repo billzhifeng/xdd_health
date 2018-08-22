@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibaba.fastjson.JSONObject;
 import com.github.java.common.base.BaseResp;
 import com.github.java.common.utils.JavaAssert;
+import com.github.java.common.utils.StringUtils;
 import com.xueduoduo.health.controller.dto.StudentQuestionnairReq;
 import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.ReturnCode;
@@ -33,12 +34,17 @@ public class StudentController {
     @Autowired
     private QuestionnaireService questionnaireService;
     @Autowired
-    private UserRepository userRepository;
-    
-    public BaseResp studentCenter(@RequestBody StudentQuestionnairReq req){
+    private UserRepository       userRepository;
+
+    /**
+     * 展示个人中心
+     */
+    @RequestMapping(value = "student/studentCenter", method = RequestMethod.POST)
+    public BaseResp studentCenter(@RequestBody StudentQuestionnairReq req) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
             logger.info("展示学生个人中心,req :{}", req);
+            JavaAssert.isTrue(null != req.getStudentId(), ReturnCode.PARAM_ILLEGLE, "学生ID不能为空", HealthException.class);
             User u = userRepository.loadUserWithPasswdById(req.getStudentId());
             resp.setData(u);
         } catch (Exception e) {
@@ -46,6 +52,30 @@ public class StudentController {
             resp = BaseResp.buildFailResp("展示学生个人中心结果异常", BaseResp.class);
         }
         logger.info("展示学生个人中心,resp:{}", resp);
+        return resp;
+    }
+
+    /**
+     * 修改密码
+     */
+    @RequestMapping(value = "student/changePasswd", method = RequestMethod.POST)
+    public BaseResp studentChangePaswd(@RequestBody StudentQuestionnairReq req) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            logger.info("学生修改密码,req :{}", req);
+            JavaAssert.isTrue(StringUtils.isNotBlank(req.getPasswd()), ReturnCode.PARAM_ILLEGLE, "学生密码不能为空",
+                    HealthException.class);
+            JavaAssert.isTrue(null != req.getStudentId(), ReturnCode.PARAM_ILLEGLE, "学生ID不能为空", HealthException.class);
+            JavaAssert.isTrue(StringUtils.isNotBlank(req.getPasswd()), ReturnCode.PARAM_ILLEGLE, "学生密码不能为空",
+                    HealthException.class);
+
+            User u = userRepository.loadUserWithPasswdById(req.getStudentId());
+            userRepository.changePasswd(req.getStudentId(), req.getPasswd());
+        } catch (Exception e) {
+            logger.error("学生修改密码异常", e);
+            resp = BaseResp.buildFailResp("学生修改密码异常", BaseResp.class);
+        }
+        logger.info("学生修改密码,resp:{}", resp);
         return resp;
     }
 
@@ -62,8 +92,8 @@ public class StudentController {
             JSONObject json = questionnaireService.loadStudentUserQuestionnaires(req.getStudentId());
             resp.setData(json);
         } catch (Exception e) {
-            logger.error("保存教师测评学生结果异常", e);
-            resp = BaseResp.buildFailResp("保存教师测评学生结果异常" + e.getMessage(), BaseResp.class);
+            logger.error("展示学生测评问卷列表异常", e);
+            resp = BaseResp.buildFailResp("展示学生测评问卷列表异常" + e.getMessage(), BaseResp.class);
         }
         logger.info("展示学生测评问卷列表,resp:{}", resp);
         return resp;

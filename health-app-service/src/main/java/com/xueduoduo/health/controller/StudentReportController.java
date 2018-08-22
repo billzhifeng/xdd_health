@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.github.java.common.base.BaseResp;
 import com.github.java.common.utils.JavaAssert;
@@ -30,6 +31,7 @@ import com.xueduoduo.health.domain.user.UserRepository;
  * @author wangzhifeng
  * @date 2018年8月19日 下午7:10:36
  */
+@RestController
 public class StudentReportController {
     private static final Logger         logger = LoggerFactory.getLogger(StudentReportController.class);
 
@@ -49,7 +51,7 @@ public class StudentReportController {
             JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
 
             List<User> users = userRepository.loadUser(req.getGradeNo(), req.getClassNo(), req.getUserName(),
-                    req.getOffSet(), req.getLength(), UserRoleType.STUDENT.name());
+                    req.getOffSet(), req.getLength(), UserRoleType.STUDENT.name(), "STUDENT");
 
             for (User stu : users) {
                 List<UserQuestionnaire> uqs = userQuestionnaireRepository.loadStudentUserQuestionnaires(stu.getId());
@@ -74,7 +76,7 @@ public class StudentReportController {
     }
 
     /**
-     * 学生档案图
+     * TODO 学生档案图
      */
     @RequestMapping(value = "admin/student/studentScoreChart", method = RequestMethod.POST)
     public BaseResp studentScoreChart(@RequestBody StudentReportReq req) {
@@ -88,8 +90,11 @@ public class StudentReportController {
             List<UserQuestionAnswer> ans = userQuestionnaireRepository.loadUserQuestionOptionsAnswers(null,
                     req.getStudentId());
             //年 + 纬度
-            Collections.sort(ans, Comparator.comparing(UserQuestionAnswer::getSchoolYear)
+            Collections.sort(ans, Comparator.comparing(UserQuestionAnswer::getQuestionnaireId)
                     .thenComparing(UserQuestionAnswer::getLatitudeId));
+            for (UserQuestionAnswer a : ans) {
+                //TODO
+            }
 
         } catch (HealthException e) {
             logger.error("学生档案图查询异常", e);

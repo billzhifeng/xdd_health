@@ -15,16 +15,18 @@ import lombok.Setter;
 @Getter
 public class StudentQuestionnairReq extends Printable implements Serializable {
 
-    private Long questionnaireId;//             = req.getParameter("questionnaireId");
+    private Long   questionnaireId;//             = req.getParameter("questionnaireId");
 
-    private Long studentId;      //       = req.getParameter("studentId");
+    private Long   studentId;      //       = req.getParameter("studentId");
 
-    private Long questionId;     //     = req.getParameter("questionId");
+    private Long   questionId;     //     = req.getParameter("questionId");
 
-    private Long optionId;       //       = req.getParameter("optionId");
+    private Long   optionId;       //       = req.getParameter("optionId");
 
-    private Long answerId;       //       = req.getParameter("answerId");
+    private Long   answerId;       //       = req.getParameter("answerId");
 
-    private Long nextQuestionId; //  = req.getParameter("nextQuestionId");
-    private Long preQuestionId;  //   = req.getParameter("preQuestionId");
+    private Long   nextQuestionId; //  = req.getParameter("nextQuestionId");
+    private Long   preQuestionId;  //   = req.getParameter("preQuestionId");
+
+    private String passwd;
 }

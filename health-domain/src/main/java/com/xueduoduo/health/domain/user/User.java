@@ -1,56 +1,62 @@
 package com.xueduoduo.health.domain.user;
 
 import java.util.Date;
+import java.util.List;
+
+import com.xueduoduo.health.domain.grade.GradeClass;
 
 /**
  * @author wangzhifeng
  * @date 2018年8月10日 下午10:42:29
  */
 public class User {
-    private Long    id;
+    private Long             id;
 
-    private String  role;
+    private String           role;
 
-    private String  loginName;
+    //    private String           loginName; 废弃
 
-    private String  userName;
+    private String           userName;
 
-    private String  position;
+    private String           position;
 
-    private String  gender;
+    private String           gender;
 
-    private String  accountNo;
+    private String           accountNo;
 
-    private String  studentNo;
+    private String           studentNo;
 
-    private Integer gradeNo;
+    private Integer          gradeNo;
 
-    private Integer classNo;
-    
-    private String  password;
+    private Integer          classNo;
 
-    private String  phone;
+    private String           password;
 
-    private String  userStatus;
+    private String           phone;
 
-    private String  addition;
+    private String           userStatus;
 
-    private String  createorId;
+    private String           addition;
 
-    private Date    createdTime;
+    private String           createorId;
 
-    private Date    updatedTime;
+    private Date             createdTime;
 
-    private String  isDeleted;
+    private Date             updatedTime;
 
-    private String  headerImg;
+    private String           isDeleted;
 
+    private String           headerImg;
+
+    private List<GradeClass> gradeClassList;
     /**
-     * 已经测评数量
+     * 已经测评数量(每学年一次)
      */
-    private int     studentReportCount;
-
-    private boolean isReport;
+    private int              studentReportCount;
+    /**
+     * 已经测评数量(每学年一次)
+     */
+    private boolean          isReport;
 
     public boolean isReport() {
         if (this.getStudentReportCount() > 0) {
@@ -73,14 +79,6 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
-    }
-
-    public String getLoginName() {
-        return loginName;
-    }
-
-    public void setLoginName(String loginName) {
-        this.loginName = loginName;
     }
 
     public String getUserName() {
@@ -217,6 +215,14 @@ public class User {
 
     public void setStudentReportCount(int studentReportCount) {
         this.studentReportCount = studentReportCount;
+    }
+
+    public List<GradeClass> getGradeClassList() {
+        return gradeClassList;
+    }
+
+    public void setGradeClassList(List<GradeClass> gradeClassList) {
+        this.gradeClassList = gradeClassList;
     }
 
 }

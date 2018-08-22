@@ -15,6 +15,8 @@ public class UserQuestionnaire {
 
     private Long    questionnaireId;
 
+    private String  questionnaireName;
+
     //已作答题目数量
     private Integer count;
 
@@ -119,6 +121,14 @@ public class UserQuestionnaire {
 
     public void setStarttime(Date starttime) {
         this.starttime = starttime;
+    }
+
+    public String getQuestionnaireName() {
+        return questionnaireName;
+    }
+
+    public void setQuestionnaireName(String questionnaireName) {
+        this.questionnaireName = questionnaireName;
     }
 
 }

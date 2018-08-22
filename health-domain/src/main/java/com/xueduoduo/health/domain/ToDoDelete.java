@@ -17,17 +17,47 @@ public class ToDoDelete {
 
         //addLatitudeScore();
 
+        addTeacherTestQuestionnaire();
     }
 
     public static void addTeacherTestQuestionnaire() {
         JSONArray ja = new JSONArray();
         JSONObject o = new JSONObject();
+        o.put("questionId", 1000048);
+        o.put("optionId", 1000091);
         o.put("latitudeId", 100000);
-        o.put("scoreId", 1);
-        o.put("minScore", 1.0);
-        o.put("maxScore", 1.4);
+        o.put("optionNo", 1);
         ja.add(o);
 
+        JSONObject o2 = new JSONObject();
+        o2.put("questionId", 1000049);
+        o2.put("optionId", 1000093);
+        o2.put("latitudeId", 100001);
+        o2.put("optionNo", 1);
+        ja.add(o2);
+
+        JSONObject o3 = new JSONObject();
+        o3.put("questionId", 1000050);
+        o3.put("optionId", 1000096);
+        o3.put("latitudeId", 100004);
+        o3.put("optionNo", 2);
+        ja.add(o3);
+
+        JSONObject o4 = new JSONObject();
+        o4.put("questionId", 1000051);
+        o4.put("optionId", 1000098);
+        o4.put("latitudeId", 100005);
+        o4.put("optionNo", 2);
+        ja.add(o4);
+
+        JSONObject o5 = new JSONObject();
+        o5.put("questionId", 1000052);
+        o5.put("optionId", 1000100);
+        o5.put("latitudeId", 100006);
+        o5.put("optionNo", 2);
+        ja.add(o5);
+
+        System.out.println(ja.toJSONString());
     }
 
     public static void addLatitudeScore() {

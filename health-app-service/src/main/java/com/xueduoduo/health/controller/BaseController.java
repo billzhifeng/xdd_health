@@ -18,9 +18,9 @@ import com.xueduoduo.health.configuration.SchoolYearUtils;
  * @author wangzhifeng
  */
 @RestController
-public class HelloController {
+public class BaseController {
 
-    private static final Logger logger = LoggerFactory.getLogger(HelloController.class);
+    private static final Logger logger = LoggerFactory.getLogger(BaseController.class);
     @Autowired
     private SchoolYearUtils     schoolYearUtils;
 
@@ -49,4 +49,5 @@ public class HelloController {
         json.put("latestSchoolYear", schoolYearUtils.getLatestSchoolYear());
         return json.toJSONString();
     }
+
 }

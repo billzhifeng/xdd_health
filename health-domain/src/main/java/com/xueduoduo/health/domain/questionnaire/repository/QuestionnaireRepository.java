@@ -68,6 +68,12 @@ public class QuestionnaireRepository {
     @Autowired
     private QuestionnaireLatitudeScoreDOMapper questionnaireLatitudeScoreDOMapper;
 
+    public QuestionOption loadQuestionOptionById(Long id) {
+        QuestionOptionDO od = questionOptionDOMapper.selectByPrimaryKey(id);
+        JavaAssert.isTrue(null != od, ReturnCode.DATA_NOT_EXIST, "题目选项不存在,id=" + id, HealthException.class);
+        return convertToQuestionOption(od);
+    }
+
     /**
      * 分页查
      * 

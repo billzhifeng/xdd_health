@@ -156,7 +156,7 @@ public class UserQuestionnaireRepository {
      * @param studentId
      * @param questionId
      */
-    public Long loadUserQuestionAnswer(Long questionnaireId, Long studentId, Long questionId) {
+    public UserQuestionAnswerDO loadUserQuestionAnswer(Long questionnaireId, Long studentId, Long questionId) {
 
         UserQuestionAnswerDOExample example = new UserQuestionAnswerDOExample();
         UserQuestionAnswerDOExample.Criteria cri = example.createCriteria();
@@ -170,7 +170,7 @@ public class UserQuestionnaireRepository {
         }
         JavaAssert.isTrue(answer.size() == 1, ReturnCode.PARAM_ILLEGLE,
                 "题目ID=" + questionId + ",学生id=" + studentId + ",存在多个选中选项", HealthException.class);
-        return answer.get(0).getId();
+        return answer.get(0);
     }
 
     /**
@@ -208,7 +208,7 @@ public class UserQuestionnaireRepository {
     public void createStudentQuestionAnswer(Long questionnaireId, int gradeNo, String userName) {
         List<UserQuestionnaireDO> uqs = new ArrayList<UserQuestionnaireDO>();
         //查询问卷对应的年级学生用户
-        List<User> users = userRepository.loadUser(gradeNo, -1);
+        List<User> users = userRepository.loadUser(gradeNo, -1, "STUDENT");
         Date now = new Date();
         for (User u : users) {
             if (!u.getRole().equals(UserRoleType.STUDENT.name())) {

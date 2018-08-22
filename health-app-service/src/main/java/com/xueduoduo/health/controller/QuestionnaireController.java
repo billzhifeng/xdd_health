@@ -2,8 +2,6 @@ package com.xueduoduo.health.controller;
 
 import java.util.Date;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -430,28 +428,22 @@ public class QuestionnaireController {
      * 保存教师测评学生结果
      */
     @RequestMapping(value = "admin/review/addTeacherTestQuestionnaire", method = RequestMethod.POST)
-    public BaseResp addTeacherTestQuestionnaire(HttpServletRequest req) {
+    public BaseResp addTeacherTestQuestionnaire(@RequestBody QuestionnaireReq req) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
             JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
-            String idStr = req.getParameter("questionnaireId");
+            logger.info("保存教师测评学生结果,req :{}", req);
 
-            String studentIdStr = req.getParameter("studentId");
-
-            String questionOptionsJson = req.getParameter("questionOptions");
-            logger.info("保存教师测评学生结果,req questionnaireId:{},studentId:{}", idStr, studentIdStr);
-
-            JavaAssert.isTrue(StringUtils.isNotBlank(idStr), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
+            JavaAssert.isTrue(null != req.getQuestionnaireId(), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
                     HealthException.class);
-            JavaAssert.isTrue(StringUtils.isNotBlank(studentIdStr), ReturnCode.PARAM_ILLEGLE, "学生Id不能为空",
-                    HealthException.class);
-            JavaAssert.isTrue(StringUtils.isNotBlank(questionOptionsJson), ReturnCode.PARAM_ILLEGLE, "教师对学生测评结果不能为空",
+            JavaAssert.isTrue(null != req.getStudentId(), ReturnCode.PARAM_ILLEGLE, "学生Id不能为空", HealthException.class);
+            JavaAssert.isTrue(null != req.getQuestionOptionsJson(), ReturnCode.PARAM_ILLEGLE, "教师对学生测评结果不能为空",
                     HealthException.class);
 
             User user = UserSessionUtils.getUserFromSession();
 
-            questionnaireService.addTeacherTestQuestionnaire(Long.parseLong(idStr), Long.parseLong(studentIdStr),
-                    questionOptionsJson, user.getUserName());
+            questionnaireService.addTeacherTestQuestionnaire(req.getQuestionnaireId(), req.getStudentId(),
+                    req.getQuestionOptionsJson(), user.getUserName());
         } catch (Exception e) {
             logger.error("保存教师测评学生结果异常", e);
             resp = BaseResp.buildFailResp("保存教师测评学生结果异常" + e.getMessage(), BaseResp.class);
