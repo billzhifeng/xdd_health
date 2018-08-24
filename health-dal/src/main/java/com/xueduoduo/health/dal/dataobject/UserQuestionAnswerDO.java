@@ -22,6 +22,10 @@ public class UserQuestionAnswerDO {
 
     private BigDecimal score;
 
+    private Integer classNo;
+
+    private Integer gradeNo;
+
     private String addition;
 
     private Date createdTime;
@@ -102,6 +106,22 @@ public class UserQuestionAnswerDO {
 
     public void setScore(BigDecimal score) {
         this.score = score;
+    }
+
+    public Integer getClassNo() {
+        return classNo;
+    }
+
+    public void setClassNo(Integer classNo) {
+        this.classNo = classNo;
+    }
+
+    public Integer getGradeNo() {
+        return gradeNo;
+    }
+
+    public void setGradeNo(Integer gradeNo) {
+        this.gradeNo = gradeNo;
     }
 
     public String getAddition() {

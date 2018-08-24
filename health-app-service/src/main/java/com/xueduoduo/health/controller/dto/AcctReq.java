@@ -39,4 +39,7 @@ public class AcctReq extends Printable implements Serializable {
     //    原始密码
     private String oriPasswd;
 
+    //头像
+    private String headImgUrl;
+
 }

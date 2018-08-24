@@ -676,6 +676,126 @@ public class UserQuestionAnswerDOExample {
             return (Criteria) this;
         }
 
+        public Criteria andClassNoIsNull() {
+            addCriterion("class_no is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoIsNotNull() {
+            addCriterion("class_no is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoEqualTo(Integer value) {
+            addCriterion("class_no =", value, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoNotEqualTo(Integer value) {
+            addCriterion("class_no <>", value, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoGreaterThan(Integer value) {
+            addCriterion("class_no >", value, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoGreaterThanOrEqualTo(Integer value) {
+            addCriterion("class_no >=", value, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoLessThan(Integer value) {
+            addCriterion("class_no <", value, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoLessThanOrEqualTo(Integer value) {
+            addCriterion("class_no <=", value, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoIn(List<Integer> values) {
+            addCriterion("class_no in", values, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoNotIn(List<Integer> values) {
+            addCriterion("class_no not in", values, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoBetween(Integer value1, Integer value2) {
+            addCriterion("class_no between", value1, value2, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andClassNoNotBetween(Integer value1, Integer value2) {
+            addCriterion("class_no not between", value1, value2, "classNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoIsNull() {
+            addCriterion("grade_no is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoIsNotNull() {
+            addCriterion("grade_no is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoEqualTo(Integer value) {
+            addCriterion("grade_no =", value, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoNotEqualTo(Integer value) {
+            addCriterion("grade_no <>", value, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoGreaterThan(Integer value) {
+            addCriterion("grade_no >", value, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoGreaterThanOrEqualTo(Integer value) {
+            addCriterion("grade_no >=", value, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoLessThan(Integer value) {
+            addCriterion("grade_no <", value, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoLessThanOrEqualTo(Integer value) {
+            addCriterion("grade_no <=", value, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoIn(List<Integer> values) {
+            addCriterion("grade_no in", values, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoNotIn(List<Integer> values) {
+            addCriterion("grade_no not in", values, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoBetween(Integer value1, Integer value2) {
+            addCriterion("grade_no between", value1, value2, "gradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGradeNoNotBetween(Integer value1, Integer value2) {
+            addCriterion("grade_no not between", value1, value2, "gradeNo");
+            return (Criteria) this;
+        }
+
         public Criteria andAdditionIsNull() {
             addCriterion("addition is null");
             return (Criteria) this;

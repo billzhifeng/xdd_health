@@ -3,6 +3,7 @@ package com.xueduoduo.health.domain.user;
 import java.util.Date;
 import java.util.List;
 
+import com.alibaba.fastjson.JSONArray;
 import com.xueduoduo.health.domain.grade.GradeClass;
 
 /**
@@ -49,6 +50,8 @@ public class User {
     private String           headerImg;
 
     private List<GradeClass> gradeClassList;
+
+    private JSONArray        gradeClasses;
     /**
      * 已经测评数量(每学年一次)
      */
@@ -223,6 +226,18 @@ public class User {
 
     public void setGradeClassList(List<GradeClass> gradeClassList) {
         this.gradeClassList = gradeClassList;
+    }
+
+    public void setReport(boolean isReport) {
+        this.isReport = isReport;
+    }
+
+    public JSONArray getGradeClasses() {
+        return gradeClasses;
+    }
+
+    public void setGradeClasses(JSONArray gradeClasses) {
+        this.gradeClasses = gradeClasses;
     }
 
 }

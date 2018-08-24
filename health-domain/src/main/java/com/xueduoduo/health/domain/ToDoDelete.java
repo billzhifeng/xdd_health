@@ -1,5 +1,7 @@
 package com.xueduoduo.health.domain;
 
+import java.text.NumberFormat;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
@@ -11,13 +13,26 @@ public class ToDoDelete {
 
     public static void main(String[] args) {
 
+        int num1 = 42;
+        int num2 = 43;
+        // 创建一个数值格式化对象
+        NumberFormat numberFormat = NumberFormat.getInstance();
+        // 设置精确到小数点后0位
+        numberFormat.setMaximumFractionDigits(0);
+        String result = numberFormat.format((float) num1 / (float) num2 * 100) + "%";
+
+        System.out.println("num1和num2的百分比为:" + result);
+
         //newQuestions();
 
         //newAndUpdateAndDeleteQuestion();
 
         //addLatitudeScore();
 
-        addTeacherTestQuestionnaire();
+        //        String str = "2018-08-07T16:00:00.000Z";
+        //        String startDateStr = str.substring(0, 10).replace("-", "");
+        //        System.out.println("=================str====" + startDateStr);
+        //        addTeacherTestQuestionnaire();
     }
 
     public static void addTeacherTestQuestionnaire() {

@@ -1,5 +1,6 @@
 package com.xueduoduo.health.domain.questionnaire;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -9,27 +10,27 @@ import java.util.Date;
  * @date 2018年8月11日 下午8:43:17
  */
 public class QuestionnaireLatitudeScore {
-    private Long   id;
+    private Long       id;
 
-    private Long   questionnaireId;
+    private Long       questionnaireId;
 
-    private Long   latitudeId;
+    private Long       latitudeId;
 
-    private Double scoreMin;
+    private BigDecimal scoreMin;
 
-    private Double scoreMax;
+    private BigDecimal scoreMax;
 
-    private String comment;
+    private String     comment;
 
-    private String addition;
+    private String     addition;
 
-    private Date   createdTime;
+    private Date       createdTime;
 
-    private Date   updatedTime;
+    private Date       updatedTime;
 
-    private String createor;
+    private String     createor;
 
-    private String isDeleted;
+    private String     isDeleted;
 
     public Long getId() {
         return id;
@@ -55,19 +56,19 @@ public class QuestionnaireLatitudeScore {
         this.latitudeId = latitudeId;
     }
 
-    public Double getScoreMin() {
+    public BigDecimal getScoreMin() {
         return scoreMin;
     }
 
-    public void setScoreMin(Double scoreMin) {
+    public void setScoreMin(BigDecimal scoreMin) {
         this.scoreMin = scoreMin;
     }
 
-    public Double getScoreMax() {
+    public BigDecimal getScoreMax() {
         return scoreMax;
     }
 
-    public void setScoreMax(Double scoreMax) {
+    public void setScoreMax(BigDecimal scoreMax) {
         this.scoreMax = scoreMax;
     }
 

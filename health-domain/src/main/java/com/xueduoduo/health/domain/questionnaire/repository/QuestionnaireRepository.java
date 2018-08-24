@@ -46,6 +46,7 @@ import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.questionnaire.Question;
 import com.xueduoduo.health.domain.questionnaire.QuestionOption;
 import com.xueduoduo.health.domain.questionnaire.Questionnaire;
+import com.xueduoduo.health.domain.questionnaire.QuestionnaireLatitudeScore;
 import com.xueduoduo.health.domain.utils.UpdateTimeUtils;
 
 /**
@@ -100,6 +101,10 @@ public class QuestionnaireRepository {
             cri.andSchoolYearEqualTo(schoolYear);
         }
 
+        if (null != gradeNo && gradeNo > 0) {
+            cri.andGradeNoEqualTo(gradeNo);
+        }
+
         if (!StringUtils.isEmpty(title)) {
             title = "%" + title + "%";
             cri.andTitleLike(title);
@@ -145,6 +150,15 @@ public class QuestionnaireRepository {
         tar.setQuestionnaireType(QuestionnaireType.parse(src.getQuestionnaireType()).getDesc());
         tar.setCreatedTimeStr(DateUtil.format(src.getCreatedTime(), DateUtil.chineseDtFormat));
         tar.setUpdatedTimeStr(UpdateTimeUtils.getUpdateTimeStr(src.getUpdatedTime()));
+        tar.setEndedDateStr(DateUtil.format(tar.getEndedDate(), DateUtil.chineseDtFormat));
+
+        if (null != tar.getEndedDate()) {
+            if (tar.getEndedDate().before(new Date())) {
+                tar.setProcessStatus("已结束");
+            } else {
+                tar.setProcessStatus("测评中");
+            }
+        }
         return tar;
     }
 
@@ -266,6 +280,8 @@ public class QuestionnaireRepository {
     public void updateToPublished(Questionnaire src, String userName) {
         //发布检查
         QuestionnaireDO qn = dao.selectByPrimaryKey(src.getId());
+        JavaAssert.isTrue(!qn.getCreateStatus().equals(QuestionnaireStatusType.PUBLISHED.name()),
+                ReturnCode.PARAM_ILLEGLE, "问卷已发布", HealthException.class);
         JavaAssert.isTrue(null != src, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + src.getId(), HealthException.class);
         int questionCount = publishedCheck(src.getId(), qn);
 
@@ -293,6 +309,32 @@ public class QuestionnaireRepository {
                 throw new HealthException(ReturnCode.OPERATOR_DATE_ILLEGLE, "问卷发布异常");
             }
         }
+    }
+
+    /**
+     * 查询题目纬度描述
+     */
+    public List<QuestionnaireLatitudeScore> loadQuestionnaireLatitudeScore(Long questionnaireId) {
+        //查询纬度设置
+        QuestionnaireLatitudeScoreDOExample example = new QuestionnaireLatitudeScoreDOExample();
+        QuestionnaireLatitudeScoreDOExample.Criteria cri = example.createCriteria();
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<QuestionnaireLatitudeScoreDO> scores = questionnaireLatitudeScoreDOMapper.selectByExample(example);
+        if (CollectionUtils.isNotEmpty(scores)) {
+            List<QuestionnaireLatitudeScore> qls = new ArrayList<QuestionnaireLatitudeScore>();
+            for (QuestionnaireLatitudeScoreDO qs : scores) {
+                qls.add(convertQuestionnaireLatitudeScore(qs));
+            }
+            return qls;
+        }
+        return null;
+    }
+
+    private QuestionnaireLatitudeScore convertQuestionnaireLatitudeScore(QuestionnaireLatitudeScoreDO src) {
+        QuestionnaireLatitudeScore tar = new QuestionnaireLatitudeScore();
+        BeanUtils.copyProperties(src, tar);
+        return tar;
     }
 
     /**

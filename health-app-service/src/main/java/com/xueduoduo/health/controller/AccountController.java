@@ -1,6 +1,8 @@
 package com.xueduoduo.health.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -38,6 +40,28 @@ public class AccountController {
 
     @Autowired
     private UserRepository      userRepository;
+
+    /**
+     * 报表中：年级班级下学生列表
+     */
+    @RequestMapping(value = "admin/account/student/gradeClassStudents", method = RequestMethod.POST)
+    public BaseResp gradeClassStudents(@RequestBody StudentReportReq req) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
+            List<User> users = userRepository.loadUser(req.getGradeNo(), req.getClassNo(), req.getUserName(),
+                    req.getOffSet(), req.getLength(), UserRoleType.STUDENT.name(), "STUDENT");
+            Collections.sort(users, Comparator.comparing(User::getStudentNo));
+            resp.setData(users);
+        } catch (HealthException e) {
+            logger.error("查询学生账号列表异常", e);
+            resp = BaseResp.buildFailResp("查询学生账号列表异常." + e.getReturnMsg(), BaseResp.class);
+        } catch (Exception e) {
+            logger.error("查询学生账号列表异常", e);
+            resp = BaseResp.buildFailResp("查询学生账号列表异常", BaseResp.class);
+        }
+        return resp;
+    }
 
     /**
      * 学生账号列表
@@ -294,8 +318,6 @@ public class AccountController {
             JavaAssert.isTrue(null != req.getTeacherId(), ReturnCode.PARAM_ILLEGLE, "教师ID不能为空", HealthException.class);
 
             User u = userRepository.loadUserWithPasswdById(req.getTeacherId());
-            List<GradeClass> gcs = userRepository.loadGradeClassByTeacherId(u.getId());
-            u.setGradeClassList(gcs);
             resp.setData(u);
         } catch (HealthException e) {
             logger.error("教师个人中心展示异常", e);
@@ -308,7 +330,7 @@ public class AccountController {
     }
 
     /**
-     * 教师个人中心编辑:姓名、性别、手机号、密码(不含年级班级)
+     * 教师个人中心编辑:姓名、性别、手机号、密码、头像(不含年级班级)
      */
     @RequestMapping(value = "admin/account/teacherCenter/edit", method = RequestMethod.POST)
     public BaseResp teacherEdit(@RequestBody AcctReq req) {
@@ -325,6 +347,7 @@ public class AccountController {
             u.setUserName(req.getUserName());
             u.setPhone(req.getPhone());
             u.setGender(req.getGender());
+            u.setHeaderImg(req.getHeadImgUrl());
 
             if (StringUtils.isNoneBlank(req.getPasswd())) {
                 JavaAssert.isTrue(StringUtils.isNoneBlank(req.getOriPasswd()), ReturnCode.PARAM_ILLEGLE, "原始密码不能为空",

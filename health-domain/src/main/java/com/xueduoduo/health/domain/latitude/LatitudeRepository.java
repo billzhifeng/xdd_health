@@ -45,6 +45,7 @@ public class LatitudeRepository {
     public List<Latitude> loadAll() {
         LatitudeDOExample example = new LatitudeDOExample();
         LatitudeDOExample.Criteria cri = example.createCriteria();
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<LatitudeDO> dos = latitudeDAO.selectByExample(example);
         List<Latitude> list = new ArrayList<Latitude>();
         if (!CollectionUtils.isEmpty(dos)) {
@@ -69,7 +70,7 @@ public class LatitudeRepository {
         LatitudeDOExample.Criteria cri = example.createCriteria();
 
         //需要分页
-        if (offSet > -1 && length >= 0) {
+        if (offSet > -1 && length > 0) {
             example.setOffSet(offSet);
             example.setLength(length);
 

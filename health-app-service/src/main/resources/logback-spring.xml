@@ -6,7 +6,7 @@
 	debug:当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false。 -->
 <configuration scan="false" scanPeriod="60 seconds" debug="false">
 	<!-- 定义日志文件 输入位置 -->
-	<property name="log_dir" value="/data/webroot/health/logs" />
+	<property name="log_dir" value="/data/heartTest/logs" />
 	<!-- 日志最大的历史 15天 
 	<property name="maxHistory" value="30" />
 	-->
@@ -102,7 +102,7 @@
 		</encoder>
 	</appender>
 
-	<springProfile name="prd,test">
+	<springProfile name="prd,test,pre">
 
 		<logger name="com" level="INFO" additivity="false">
 			<appender-ref ref="ASYNC_INFO" />

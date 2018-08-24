@@ -45,6 +45,9 @@ public class LoginController {
                 user = u;
                 u.setPassword(null);
                 //TODO req.getSession().setAttribute(LoginConstantStr.Token_session_key, user);
+            } else {
+                resp.setReturnCode(ReturnCode.DATA_NOT_EXIST.getCode());
+                resp.setReturnMsg("用户名或密码不正确");
             }
             resp.setData(user);
             return resp;

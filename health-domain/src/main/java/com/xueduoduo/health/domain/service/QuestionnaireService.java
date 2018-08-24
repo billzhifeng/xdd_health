@@ -1,6 +1,7 @@
 package com.xueduoduo.health.domain.service;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -83,7 +84,17 @@ public class QuestionnaireService {
     private UserQuestionnaireRepository        userQuestionnaireRepository;
 
     @Value("${student.submit.second}")
-    private Integer                            studentSubmitSecond = 900;         //900秒15分钟
+    private Integer                            studentSubmitSecond = 900;                           //900秒15分钟
+
+    private static Map<Integer, String>        notices             = new HashMap<Integer, String>();
+    static {
+        notices.put(10, "哇！你真棒！已经完成10道题啦！");
+        notices.put(20, "看来你完成的很顺利！加油哦！");
+        notices.put(27, "题目已经过半啦！继续努力！");
+        notices.put(33, "还有10题，加油吧！");
+        notices.put(38, "最后5道题啦，胜利就在眼前！");
+        notices.put(43, "恭喜你完成本次闯关，放松一下吧！");
+    }
 
     /**
      * 复制问卷
@@ -179,7 +190,8 @@ public class QuestionnaireService {
                     if (withScore) {
                         BigDecimal score = qo.getScore();
                         score = score == null ? new BigDecimal(0) : score;
-                        if (score.doubleValue() == 0 || minScore.doubleValue() > score.doubleValue()) {
+                        minScore = score;
+                        if (minScore.doubleValue() > score.doubleValue()) {
                             minScore = score;
                         }
                         maxScore = maxScore.add(score);
@@ -314,7 +326,7 @@ public class QuestionnaireService {
                 Long optionId = option.getId();//(Integer) option.get("id");
                 Integer optionNo = option.getOptionNo();//(Integer) option.get("optionNo");
                 String optionName = option.getDisplayName();//(String) option.get("displayName");
-
+                String img = option.getImgUrl();
                 if (null != optionId) {
                     //更新选项
                     QuestionOptionDO o = new QuestionOptionDO();
@@ -322,6 +334,7 @@ public class QuestionnaireService {
                     o.setOptionNo(optionNo);
                     o.setUpdatedTime(today);
                     o.setId(optionId.longValue());
+                    o.setImgUrl(img);
                     count = questionOptionDOMapper.updateByPrimaryKeySelective(o);
                     JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目选项更新异常", HealthException.class);
                     map.remove(optionId.longValue());
@@ -336,6 +349,7 @@ public class QuestionnaireService {
                     o.setCreateor(userName);
                     o.setCreatedTime(today);
                     o.setUpdatedTime(today);
+                    o.setImgUrl(img);
                     o.setIsDeleted(IsDeleted.N.name());
 
                     count = questionOptionDOMapper.insertSelective(o);
@@ -389,6 +403,7 @@ public class QuestionnaireService {
                 o.setCreateor(userName);
                 o.setCreatedTime(today);
                 o.setUpdatedTime(today);
+                o.setImgUrl(option.getImgUrl());
                 o.setIsDeleted(IsDeleted.N.name());
 
                 count = questionOptionDOMapper.insertSelective(o);
@@ -439,11 +454,11 @@ public class QuestionnaireService {
         //问卷步骤、按钮是否展示
         JSONArray btns = new JSONArray();
         JSONArray steps = new JSONArray();
-        btns.add("next_btn");
         btns.add("pre_btn");
         steps.add(0, "question_set_step");
         steps.add(1, "score_set_step");
         if (QuestionnaireType.STUDENT.name().equals(qe.getQuestionnaireType())) {//学生问卷
+            btns.add("next_btn");
             steps.add(2, "latitude_set_step");
         } else {
             btns.add("publish_btn");//教师问卷有发布按钮
@@ -642,8 +657,8 @@ public class QuestionnaireService {
             Long latitudeId = q.getId();//(Integer) q.get("latitudeId");
             List<QuestionnaireLatitudeScore> latitudeScoreDesc = q.getLatitudeScoreDesc();
             for (QuestionnaireLatitudeScore score : latitudeScoreDesc) {
-                BigDecimal maxScore = new BigDecimal(score.getScoreMax());
-                BigDecimal minScore = new BigDecimal(score.getScoreMin());
+                BigDecimal maxScore = score.getScoreMax();
+                BigDecimal minScore = score.getScoreMin();
                 minScore.setScale(1, BigDecimal.ROUND_HALF_UP);
                 maxScore.setScale(1, BigDecimal.ROUND_HALF_UP);
 
@@ -701,8 +716,8 @@ public class QuestionnaireService {
     private QuestionnaireLatitudeScore convertQuestionnaireLatitudeScore(QuestionnaireLatitudeScoreDO src) {
         QuestionnaireLatitudeScore tar = new QuestionnaireLatitudeScore();
         BeanUtils.copyProperties(src, tar);
-        tar.setScoreMin(src.getScoreMin().doubleValue());
-        tar.setScoreMax(src.getScoreMax().doubleValue());
+        tar.setScoreMin(src.getScoreMin());
+        tar.setScoreMax(src.getScoreMax());
         return tar;
     }
 
@@ -718,11 +733,14 @@ public class QuestionnaireService {
 
         //统计问卷测评数
         List<Questionnaire> list = new ArrayList<Questionnaire>();
-        for (Questionnaire q : page.getPageData()) {
-            //已经发布才统计
-            if (QuestionnaireStatusType.PUBLISHED.name().equals(q.getCreateStatus())) {
-                q = questionnaireRepository.questionnaireSummary(q);
-                list.add(q);
+        if (CollectionUtils.isNotEmpty(page.getPageData())) {
+
+            for (Questionnaire q : page.getPageData()) {
+                //已经发布才统计
+                if (QuestionnaireStatusType.PUBLISHED.name().equals(q.getCreateStatus())) {
+                    q = questionnaireRepository.questionnaireSummary(q);
+                    list.add(q);
+                }
             }
         }
 
@@ -739,8 +757,10 @@ public class QuestionnaireService {
         JavaAssert.isTrue(null != stuQu, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId,
                 HealthException.class);
 
+        gradeNo = stuQu.getGradeNo();
+
         //2查询问卷对应的年级->班级学生用户
-        List<User> users = userRepository.loadUser(gradeNo, classNo, "STUDENT");
+        List<User> users = userRepository.loadUser(gradeNo, classNo, UserRoleType.STUDENT.name(), "STUDENT");
 
         //查询每个学生完成对该问卷答题
         Set<Long> answeredStudenIds = new HashSet<Long>();
@@ -784,17 +804,22 @@ public class QuestionnaireService {
             stu.put("studentHeadImgUrl", u.getHeaderImg());
             //学生自己完成测评
             if (answeredStudenIds.contains(u.getId().longValue())) {
-                stu.put("studentAnswer", "Y");
+                stu.put("studentAnswer", "已测评");
             } else {
-                stu.put("studentAnswer", "N");
+                stu.put("studentAnswer", "未测评");
             }
 
             //教师对学生完成测评
             if (alreadyTestStudenIds.contains(u.getId().longValue())) {
-                stu.put("teacherAnswer", "Y");
+                stu.put("teacherAnswer", "已测评");
             } else {
-                stu.put("teacherAnswer", "N");
-                stu.put("teacherQuestionnaireId", null != teQu ? teQu.getId() : null);
+                if (null != teQu) {
+                    stu.put("teacherAnswer", "未测评");
+                    stu.put("teacherQuestionnaireId", teQu.getId());
+                } else {
+                    stu.put("teacherAnswer", "无问卷");
+                    stu.put("teacherQuestionnaireId", null);
+                }
             }
 
             //完成统计
@@ -862,6 +887,8 @@ public class QuestionnaireService {
         JavaAssert.isTrue(totalQuestionCount == size, ReturnCode.DATA_NOT_EXIST,
                 "问卷题目数=" + totalQuestionCount + ",与答案数量=" + size + ",不等." + questionnaireId, HealthException.class);
 
+        User stu = userRepository.loadUserById(studentId);
+
         UserQuestionAnswer ua = new UserQuestionAnswer();
         ua.setCreatedTime(now);
         ua.setCreateor(userName);
@@ -878,15 +905,19 @@ public class QuestionnaireService {
             Integer questionId = (Integer) q.get("questionId");
             //选项
             Integer optionId = (Integer) q.get("optionId");
-            Integer latitudeId = (Integer) q.get("latitudeId");
-            Integer optionNo = (Integer) q.get("optionNo");
+            QuestionOptionDO op = questionOptionDOMapper.selectByPrimaryKey(new Long(optionId));
+            Long latitudeId = op.getLatitudeId();
+            Integer optionNo = op.getOptionNo();
 
             UserQuestionAnswer tem = new UserQuestionAnswer();
             BeanUtils.copyProperties(ua, tem);
             tem.setOptionId(optionId.longValue());
             tem.setOptionNo(optionNo);
-            tem.setLatitudeId(latitudeId.longValue());
+            tem.setLatitudeId(latitudeId);
             tem.setQuestionId(questionId.longValue());
+            tem.setScore(op.getScore());
+            tem.setClassNo(stu.getClassNo());
+            tem.setGradeNo(stu.getGradeNo());
             answers.add(tem);
         }
 
@@ -967,8 +998,10 @@ public class QuestionnaireService {
         //4查看学习对该题目答题情况
         UserQuestionAnswerDO userAnswer = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,
                 question.getId());
-        json.put("answerId", userAnswer.getId());
-        json.put("optionId", userAnswer.getOptionId());
+        if (null != userAnswer) {
+            json.put("answerId", userAnswer.getId());
+            json.put("optionId", userAnswer.getOptionId());
+        }
 
         //5.操作是否有上一题、下一题
         json.put("preQuestionId", null);
@@ -977,6 +1010,10 @@ public class QuestionnaireService {
         } else {
             json.put("nextQuestionId", questions.get(1).getId());
         }
+
+        json.put("totalCount", questions.size());
+        json.put("currentCount", 1);
+        json.put("answerRate", "0");
 
         //开始测评
         userQuestionnaireRepository.updateStudentStartAnswer(questionnaireId, studentId);
@@ -989,7 +1026,7 @@ public class QuestionnaireService {
      */
     @Transactional
     public void saveStudentTestQuestionnaire(Long questionnaireId, Long studentId, Long questionId, Long optinId,
-                                             Long answerId) {
+                                             Long answerId, User student) {
         //1查询学生问卷
         Questionnaire stuQu = questionnaireRepository.loadById(questionnaireId);
         JavaAssert.isTrue(null != stuQu, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId,
@@ -1014,6 +1051,8 @@ public class QuestionnaireService {
         a.setUpdatedTime(now);
         a.setUserId(studentId);
         a.setId(answerId);
+        a.setClassNo(student.getClassNo());
+        a.setGradeNo(student.getGradeNo());
         a.setOptionNo(qo.getOptionNo());
 
         //更新
@@ -1059,6 +1098,25 @@ public class QuestionnaireService {
             //用户操作的按钮对应题目
             if (q.getId().longValue() == showQuesId.longValue()) {
                 showQuestion = q;
+                int qustionNo = q.getQuestionNo();
+                json.put("currentCount", qustionNo);
+
+                //完成百分比
+                int num1 = qustionNo;
+                int num2 = size;
+                // 创建一个数值格式化对象
+                NumberFormat numberFormat = NumberFormat.getInstance();
+                // 设置精确到小数点后0位
+                numberFormat.setMaximumFractionDigits(0);
+                String rate = numberFormat.format((float) num1 / (float) num2 * 100);
+                json.put("answerRate", rate);
+
+                if (notices.containsKey(q.getQuestionNo())) {
+
+                    json.put("notice", notices.get(q.getQuestionNo()));
+
+                }
+
                 //最后一题
                 if (i == (size - 1)) {
                     nextQuesId = null;
@@ -1077,6 +1135,8 @@ public class QuestionnaireService {
                 break;
             }
         }
+        json.put("totalCount", questions.size());
+
         json.put("question", showQuestion);
         json.put("preQuestionId", preQuesId);
         json.put("nextQuestionId", nextQuesId);
@@ -1090,8 +1150,11 @@ public class QuestionnaireService {
         //6查看学习对该题目答题情况
         UserQuestionAnswerDO userAnswer = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,
                 showQuestion.getId());
-        json.put("answerId", userAnswer.getId());
-        json.put("optionId", userAnswer.getOptionId());
+        if (null != userAnswer) {
+            json.put("answerId", userAnswer.getId());
+            json.put("optionId", userAnswer.getOptionId());
+        }
+
         resp.setData(json);
         return resp;
     }
@@ -1100,7 +1163,8 @@ public class QuestionnaireService {
      * 学生交卷
      */
     @Transactional
-    public BaseResp studentSumbit(Long questionnaireId, Long studentId, Long questionId, Long optionId, Long answerId) {
+    public BaseResp studentSumbit(Long questionnaireId, Long studentId, Long questionId, Long optionId, Long answerId,
+                                  User student) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         Date now = new Date();
         UserQuestionnaire dbuq = userQuestionnaireRepository.loadUserQuestionnaireByQuesIdAndStudentId(questionnaireId,
@@ -1110,7 +1174,7 @@ public class QuestionnaireService {
         }
 
         //0保存问卷
-        saveStudentTestQuestionnaire(questionnaireId, studentId, questionId, optionId, answerId);
+        saveStudentTestQuestionnaire(questionnaireId, studentId, questionId, optionId, answerId, student);
 
         //1查询学生问卷
         Questionnaire stuQu = questionnaireRepository.loadById(questionnaireId);

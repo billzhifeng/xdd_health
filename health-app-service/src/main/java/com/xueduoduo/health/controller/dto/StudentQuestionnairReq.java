@@ -29,4 +29,6 @@ public class StudentQuestionnairReq extends Printable implements Serializable {
     private Long   preQuestionId;  //   = req.getParameter("preQuestionId");
 
     private String passwd;
+
+    private String headImgUrl;     //头像图片地址
 }

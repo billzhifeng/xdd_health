@@ -28,6 +28,10 @@ public class UserQuestionAnswer {
 
     private BigDecimal score;
 
+    private Integer    classNo;
+
+    private Integer    gradeNo;
+
     private String     addition;
 
     private Date       createdTime;
@@ -148,6 +152,22 @@ public class UserQuestionAnswer {
 
     public void setOptionNo(Integer optionNo) {
         this.optionNo = optionNo;
+    }
+
+    public Integer getClassNo() {
+        return classNo;
+    }
+
+    public void setClassNo(Integer classNo) {
+        this.classNo = classNo;
+    }
+
+    public Integer getGradeNo() {
+        return gradeNo;
+    }
+
+    public void setGradeNo(Integer gradeNo) {
+        this.gradeNo = gradeNo;
     }
 
 }

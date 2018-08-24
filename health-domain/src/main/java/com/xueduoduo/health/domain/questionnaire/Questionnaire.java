@@ -18,7 +18,11 @@ public class Questionnaire {
 
     private String     introduction;
 
+    //创建、发布
     private String     createStatus;
+
+    //测评进行状态
+    private String     processStatus;
 
     private String     isDeleted;
 
@@ -27,6 +31,8 @@ public class Questionnaire {
     private Date       startDate;
 
     private Date       endedDate;
+
+    private String     endedDateStr;
 
     private String     schoolYear;
     //题目数量
@@ -219,6 +225,30 @@ public class Questionnaire {
 
     public void setStudentnotAnswerCount(int studentnotAnswerCount) {
         this.studentNotAnswerCount = studentnotAnswerCount;
+    }
+
+    public String getProcessStatus() {
+        return processStatus;
+    }
+
+    public void setProcessStatus(String processStatus) {
+        this.processStatus = processStatus;
+    }
+
+    public int getStudentNotAnswerCount() {
+        return studentNotAnswerCount;
+    }
+
+    public void setStudentNotAnswerCount(int studentNotAnswerCount) {
+        this.studentNotAnswerCount = studentNotAnswerCount;
+    }
+
+    public String getEndedDateStr() {
+        return endedDateStr;
+    }
+
+    public void setEndedDateStr(String endedDateStr) {
+        this.endedDateStr = endedDateStr;
     }
 
 }

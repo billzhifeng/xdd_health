@@ -9,6 +9,8 @@
     <result column="latitude_id" jdbcType="BIGINT" property="latitudeId" />
     <result column="option_id" jdbcType="BIGINT" property="optionId" />
     <result column="option_no" jdbcType="INTEGER" property="optionNo" />
+    <result column="grade_no" jdbcType="INTEGER" property="gradeNo" />
+    <result column="class_no" jdbcType="INTEGER" property="classNo" />
     <result column="school_year" jdbcType="VARCHAR" property="schoolYear" />
     <result column="score" jdbcType="DECIMAL" property="score" />
     <result column="addition" jdbcType="VARCHAR" property="addition" />
@@ -47,7 +49,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, user_id, questionnaire_id, question_id, latitude_id, option_id, option_no, school_year, 
+    id, user_id, questionnaire_id, question_id, latitude_id, option_id, option_no,grade_no,class_no, school_year, 
     score, addition, created_time, updated_time, createor, is_deleted
   </sql>
   <select id="selectByExample" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionAnswerDOExample" resultMap="BaseResultMap">
@@ -98,6 +100,12 @@
       <if test="optionNo != null">
         option_no,
       </if>
+            <if test="gradeNo != null">
+        grade_no,
+      </if>
+            <if test="classNo != null">
+        class_no,
+      </if>
       <if test="schoolYear != null">
         school_year,
       </if>
@@ -141,6 +149,12 @@
       </if>
       <if test="optionNo != null">
         #{optionNo,jdbcType=INTEGER},
+      </if>
+            <if test="gradeNo != null">
+        #{gradeNo,jdbcType=INTEGER},
+      </if>
+            <if test="classNo != null">
+        #{classNo,jdbcType=INTEGER},
       </if>
       <if test="schoolYear != null">
         #{schoolYear,jdbcType=VARCHAR},
@@ -191,6 +205,12 @@
       </if>
       <if test="optionNo != null">
         option_no = #{optionNo,jdbcType=INTEGER},
+      </if>
+            <if test="gradeNo != null">
+        grade_no = #{gradeNo,jdbcType=INTEGER},
+      </if>
+            <if test="classNo != null">
+        class_no = #{classNo,jdbcType=INTEGER},
       </if>
       <if test="schoolYear != null">
         school_year = #{schoolYear,jdbcType=VARCHAR},

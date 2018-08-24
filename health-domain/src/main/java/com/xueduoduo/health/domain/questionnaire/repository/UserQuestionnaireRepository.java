@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -93,7 +94,7 @@ public class UserQuestionnaireRepository {
         cri.andUserIdEqualTo(uq.getUserId());
         List<UserQuestionnaireDO> uqs = userQuestionnaireDOMapper.selectByExample(example);
         JavaAssert.isTrue(CollectionUtils.isNotEmpty(uqs), ReturnCode.DB_ERROR,
-                "学生对问卷Id=" + uq.getQuestionnaireId() + "答题结果不存在", HealthException.class);
+                "问卷ID=" + uq.getQuestionnaireId() + ",学生ID=" + uq.getUserId() + ",的答题结果不存在", HealthException.class);
         JavaAssert.isTrue(1 == uqs.size(), ReturnCode.DB_ERROR, "学生对问卷Id=" + uq.getQuestionnaireId() + "答题结果不唯一",
                 HealthException.class);
 
@@ -161,7 +162,7 @@ public class UserQuestionnaireRepository {
         UserQuestionAnswerDOExample example = new UserQuestionAnswerDOExample();
         UserQuestionAnswerDOExample.Criteria cri = example.createCriteria();
         cri.andUserIdEqualTo(studentId);
-        cri.andQuestionIdEqualTo(questionnaireId);
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
         cri.andQuestionIdEqualTo(questionId);
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<UserQuestionAnswerDO> answer = userQuestionAnswerDOMapper.selectByExample(example);
@@ -184,7 +185,9 @@ public class UserQuestionnaireRepository {
 
         UserQuestionAnswerDOExample example = new UserQuestionAnswerDOExample();
         UserQuestionAnswerDOExample.Criteria cri = example.createCriteria();
-        cri.andUserIdEqualTo(studentId);
+        if (null != studentId) {
+            cri.andUserIdEqualTo(studentId);
+        }
         if (null != questionnaireId) {
             cri.andQuestionnaireIdEqualTo(questionnaireId);
         }
@@ -211,7 +214,7 @@ public class UserQuestionnaireRepository {
         List<User> users = userRepository.loadUser(gradeNo, -1, "STUDENT");
         Date now = new Date();
         for (User u : users) {
-            if (!u.getRole().equals(UserRoleType.STUDENT.name())) {
+            if (StringUtils.isBlank(u.getRole()) || !u.getRole().equals(UserRoleType.STUDENT.name())) {
                 continue;
             }
             UserQuestionnaireDO uq = new UserQuestionnaireDO();

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSONArray;
 import com.github.java.common.base.Page;
 import com.github.java.common.utils.JavaAssert;
 import com.xueduoduo.health.dal.dao.UserDOMapper;
@@ -210,14 +211,25 @@ public class UserRepository {
             cri.andIsDeletedEqualTo(IsDeleted.N.name());
             List<UserGradeClassDO> list = userGradeClassDOMapper.selectByExample(example);
             if (CollectionUtils.isNotEmpty(list)) {
+                JSONArray gsay = new JSONArray();
+
                 List<GradeClass> gcs = new ArrayList<GradeClass>();
+
                 for (UserGradeClassDO gc : list) {
+
+                    JSONArray g = new JSONArray();
+                    g.add(gc.getGradeNo());
+                    g.add(gc.getClassNo());
+
+                    gsay.add(g);
+
                     GradeClass ugs = new GradeClass();
                     ugs.setClassNo(gc.getClassNo());
                     ugs.setGradeNo(gc.getGradeNo());
                     gcs.add(ugs);
                 }
                 user.setGradeClassList(gcs);
+                user.setGradeClasses(gsay);
             }
         }
         return user;
@@ -228,6 +240,15 @@ public class UserRepository {
         UserDO u = new UserDO();
         u.setId(id);
         u.setPassword(passwd);
+        u.setUpdatedTime(new Date());
+        userDOMapper.updateByPrimaryKeySelective(u);
+    }
+
+    @Transactional
+    public void changeHeadImg(Long id, String headImgUrl) {
+        UserDO u = new UserDO();
+        u.setId(id);
+        u.setHeaderImg(headImgUrl);
         u.setUpdatedTime(new Date());
         userDOMapper.updateByPrimaryKeySelective(u);
     }
@@ -354,11 +375,12 @@ public class UserRepository {
         } else {//学生
             UserDOExample example = new UserDOExample();
             UserDOExample.Criteria cri = example.createCriteria();
-            userName = "%" + userName + "%";
-            cri.andUserNameLike(userName);
-
+            if (StringUtils.isNoneBlank(userName)) {
+                userName = "%" + userName + "%";
+                cri.andUserNameLike(userName);
+            }
             if (null != userRole && userRole.size() > 0) {
-                if (userRole.size() == 0) {
+                if (userRole.size() == 1) {
                     cri.andRoleEqualTo(userRole.get(0));
                 } else {
                     cri.andRoleIn(userRole);
@@ -404,7 +426,8 @@ public class UserRepository {
     public List<User> loadUser(int gradeNo, int classNo, String userName, int offSet, int length, String userRole,
                                String teacherOrStudent) {
         List<String> roles = new ArrayList<String>();
-        roles.add(userRole);
+        if (StringUtils.isNoneBlank(userRole))
+            roles.add(userRole);
         return loadUser(gradeNo, classNo, userName, offSet, length, roles, false, teacherOrStudent).getPageData();
     }
 
@@ -415,6 +438,13 @@ public class UserRepository {
         return loadUser(gradeNo, classNo, null, -1, -1, null, teacherOrStudent);
     }
 
+    /**
+     * 查询年级班级学生 +老师
+     */
+    public List<User> loadUser(int gradeNo, int classNo, String role, String teacherOrStudent) {
+        return loadUser(gradeNo, classNo, null, -1, -1, role, teacherOrStudent);
+    }
+
     private User convertToUser(UserDO src) {
         User tar = new User();
         BeanUtils.copyProperties(src, tar);
@@ -422,6 +452,12 @@ public class UserRepository {
         tar.setUserStatus("正常");
         tar.setAddition(src.getGradeNoStr() + "年级" + src.getClassNo() + "班");
         tar.setUserStatus("正常");
+        if (StringUtils.isNoneBlank(src.getPosition())) {
+            //TODO
+            //            tar.setPosition(position);
+            //        } else {
+            //            tar.setPosition(position);
+        }
         return tar;
     }
 
