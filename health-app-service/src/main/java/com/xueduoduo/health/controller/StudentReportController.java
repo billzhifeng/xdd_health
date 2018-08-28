@@ -28,12 +28,15 @@ import com.github.java.common.utils.JavaAssert;
 import com.xueduoduo.health.controller.dto.StudentReportReq;
 import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.QuestionnaireAnswerStatus;
+import com.xueduoduo.health.domain.enums.QuestionnaireType;
 import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.enums.UserRoleType;
 import com.xueduoduo.health.domain.latitude.Latitude;
 import com.xueduoduo.health.domain.latitude.LatitudeRepository;
+import com.xueduoduo.health.domain.questionnaire.Questionnaire;
 import com.xueduoduo.health.domain.questionnaire.UserQuestionAnswer;
 import com.xueduoduo.health.domain.questionnaire.UserQuestionnaire;
+import com.xueduoduo.health.domain.questionnaire.repository.QuestionnaireRepository;
 import com.xueduoduo.health.domain.questionnaire.repository.UserQuestionnaireRepository;
 import com.xueduoduo.health.domain.user.User;
 import com.xueduoduo.health.domain.user.UserRepository;
@@ -54,6 +57,8 @@ public class StudentReportController {
     private UserQuestionnaireRepository userQuestionnaireRepository;
     @Autowired
     private LatitudeRepository          latitudeRepository;
+    @Autowired
+    private QuestionnaireRepository     questionnaireRepository;
 
     /**
      * 学生档案列表
@@ -74,7 +79,11 @@ public class StudentReportController {
                 int count = 0;
                 for (UserQuestionnaire uq : uqs) {
                     if (QuestionnaireAnswerStatus.DONE.name().equals(uq.getAnswerStatus())) {
-                        count++;
+                        Questionnaire questionnaire = questionnaireRepository.loadById(uq.getQuestionnaireId());
+                        if (QuestionnaireType.STUDENT.getDesc().equals(questionnaire.getQuestionnaireType())
+                                || QuestionnaireType.STUDENT.name().equals(questionnaire.getQuestionnaireType())) {
+                            count++;
+                        }
                     }
                 }
                 stu.setStudentReportCount(count);
@@ -138,6 +147,13 @@ public class StudentReportController {
                 questionnairIds.addAll(questionnairIdSets);
                 Collections.sort(questionnairIds, Comparator.comparing(Long::intValue).reversed());
                 for (Long quesId : questionnairIds) {
+
+                    Questionnaire questionnaire = questionnaireRepository.loadById(quesId);
+                    if (QuestionnaireType.TEACHER.getDesc().equals(questionnaire.getQuestionnaireType())
+                            || QuestionnaireType.TEACHER.name().equals(questionnaire.getQuestionnaireType())) {
+                        continue;
+                    }
+
                     Map<Long, BigDecimal> scores = new HashMap<Long, BigDecimal>();
                     Map<Long, Integer> counts = new HashMap<Long, Integer>();
                     for (UserQuestionAnswer a : ans) {

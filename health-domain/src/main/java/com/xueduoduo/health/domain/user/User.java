@@ -4,13 +4,14 @@ import java.util.Date;
 import java.util.List;
 
 import com.alibaba.fastjson.JSONArray;
+import com.github.java.common.base.Printable;
 import com.xueduoduo.health.domain.grade.GradeClass;
 
 /**
  * @author wangzhifeng
  * @date 2018年8月10日 下午10:42:29
  */
-public class User {
+public class User extends Printable {
     private Long             id;
 
     private String           role;
@@ -20,6 +21,8 @@ public class User {
     private String           userName;
 
     private String           position;
+
+    private String           positionStr;
 
     private String           gender;
 
@@ -238,6 +241,14 @@ public class User {
 
     public void setGradeClasses(JSONArray gradeClasses) {
         this.gradeClasses = gradeClasses;
+    }
+
+    public String getPositionStr() {
+        return positionStr;
+    }
+
+    public void setPositionStr(String positionStr) {
+        this.positionStr = positionStr;
     }
 
 }

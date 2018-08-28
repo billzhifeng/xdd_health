@@ -171,8 +171,12 @@ public class UserRepository {
         UserGradeClassDOExample example = new UserGradeClassDOExample();
         UserGradeClassDOExample.Criteria cri = example.createCriteria();
         cri.andUserIdEqualTo(teacherId);
-        cri.andGradeNoEqualTo(gradeNo);
-        cri.andClassNoEqualTo(classNo);
+        if (gradeNo > 0) {
+            cri.andGradeNoEqualTo(gradeNo);
+        }
+        if (classNo > 0) {
+            cri.andClassNoEqualTo(classNo);
+        }
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         List<UserGradeClassDO> list = userGradeClassDOMapper.selectByExample(example);
         if (CollectionUtils.isNotEmpty(list)) {
@@ -203,7 +207,8 @@ public class UserRepository {
         JavaAssert.isTrue(IsDeleted.N.name().equals(u.getIsDeleted()), ReturnCode.DATA_NOT_EXIST, "用户不存在,用户id=" + id,
                 HealthException.class);
         User user = convertToUserWithPasswd(u);
-        if (user.getRole().equals(UserRoleType.TEACHER.name())) {
+        if (user.getRole().equals(UserRoleType.TEACHER.name())
+                || user.getRole().equals(UserRoleType.CLASS_HEADER.name())) {
 
             UserGradeClassDOExample example = new UserGradeClassDOExample();
             UserGradeClassDOExample.Criteria cri = example.createCriteria();
@@ -453,10 +458,16 @@ public class UserRepository {
         tar.setAddition(src.getGradeNoStr() + "年级" + src.getClassNo() + "班");
         tar.setUserStatus("正常");
         if (StringUtils.isNoneBlank(src.getPosition())) {
-            //TODO
-            //            tar.setPosition(position);
-            //        } else {
-            //            tar.setPosition(position);
+            if (UserRoleType.STUDENT.name().equals(src.getPosition())) {
+                tar.setPositionStr(UserRoleType.STUDENT.getDesc());
+            } else if (UserRoleType.TEACHER.name().equals(src.getPosition())) {
+                tar.setPositionStr(UserRoleType.TEACHER.getDesc());
+            } else if (UserRoleType.MASTER.name().equals(src.getPosition())) {
+                tar.setPositionStr(UserRoleType.MASTER.getDesc());
+            } else if (UserRoleType.CLASS_HEADER.name().equals(src.getPosition())) {
+                tar.setPositionStr(UserRoleType.CLASS_HEADER.getDesc());
+            }
+
         }
         return tar;
     }

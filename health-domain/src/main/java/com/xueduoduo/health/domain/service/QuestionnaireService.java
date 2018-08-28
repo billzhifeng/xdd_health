@@ -88,6 +88,9 @@ public class QuestionnaireService {
 
     private static Map<Integer, String>        notices             = new HashMap<Integer, String>();
     static {
+        notices.put(4, "哇！你真棒！已经完成4道题啦！");
+        notices.put(8, "哇！你真棒！已经完成4道题啦！");
+        //--以上测试
         notices.put(10, "哇！你真棒！已经完成10道题啦！");
         notices.put(20, "看来你完成的很顺利！加油哦！");
         notices.put(27, "题目已经过半啦！继续努力！");
@@ -138,7 +141,8 @@ public class QuestionnaireService {
         btns.add("next_btn");
         steps.add(0, "question_set_step");
         steps.add(1, "score_set_step");
-        if (QuestionnaireType.STUDENT.name().equals(qe.getQuestionnaireType())) {//学生问卷
+        if (QuestionnaireType.STUDENT.name().equals(qe.getQuestionnaireType())
+                || QuestionnaireType.STUDENT.getDesc().equals(qe.getQuestionnaireType())) {//学生问卷
             steps.add(2, "latitude_set_step");
         }
         json.put("btns", btns);
@@ -457,7 +461,8 @@ public class QuestionnaireService {
         btns.add("pre_btn");
         steps.add(0, "question_set_step");
         steps.add(1, "score_set_step");
-        if (QuestionnaireType.STUDENT.name().equals(qe.getQuestionnaireType())) {//学生问卷
+        if (QuestionnaireType.STUDENT.name().equals(qe.getQuestionnaireType())
+                || QuestionnaireType.STUDENT.getDesc().equals(qe.getQuestionnaireType())) {//学生问卷
             btns.add("next_btn");
             steps.add(2, "latitude_set_step");
         } else {
@@ -787,7 +792,7 @@ public class QuestionnaireService {
                     .summaryStudentAnsweredQuestionnaire(teQu.getId());
             if (!CollectionUtils.isEmpty(teaStuAnsQus)) {
                 for (UserQuestionnaire tsaq : teaStuAnsQus) {
-                    alreadyTestStudenIds.add(tsaq.getId());
+                    alreadyTestStudenIds.add(tsaq.getUserId());
                 }
             }
         }
@@ -952,6 +957,10 @@ public class QuestionnaireService {
         List<UserQuestionnaire> finishedList = new ArrayList<UserQuestionnaire>();
         List<UserQuestionnaire> notFinishedList = new ArrayList<UserQuestionnaire>();
         for (UserQuestionnaire uq : list) {
+            QuestionnaireDO tem = questionnaireRepository.loadQuestionnaireDOById(uq.getQuestionnaireId());
+            if (!QuestionnaireType.STUDENT.name().equals(tem.getQuestionnaireType())) {
+                continue;
+            }
             Questionnaire q = questionnaireRepository.loadById(uq.getQuestionnaireId());
             uq.setQuestionnaireName(q.getTitle());
 

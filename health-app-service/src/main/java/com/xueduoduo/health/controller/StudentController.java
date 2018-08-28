@@ -18,7 +18,6 @@ import com.xueduoduo.health.domain.enums.ReturnCode;
 import com.xueduoduo.health.domain.service.QuestionnaireService;
 import com.xueduoduo.health.domain.user.User;
 import com.xueduoduo.health.domain.user.UserRepository;
-import com.xueduoduo.health.login.UserSessionUtils;
 
 /**
  * 学生操作
@@ -162,7 +161,7 @@ public class StudentController {
                     ReturnCode.PARAM_ILLEGLE, "学生测评操作不能为空", HealthException.class);
 
             Long questionnaireId = req.getQuestionnaireId();
-            User user = UserSessionUtils.getUserFromSession();
+            User user = userRepository.loadUserById(req.getStudentId());
 
             //下一
             if (null != req.getNextQuestionId()) {
@@ -207,7 +206,7 @@ public class StudentController {
             JavaAssert.isTrue(null != req.getOptionId(), ReturnCode.PARAM_ILLEGLE, "学生测评答案选项不能为空",
                     HealthException.class);
 
-            User user = UserSessionUtils.getUserFromSession();
+            User user = userRepository.loadUserById(req.getStudentId());
             Long questionnaireId = req.getQuestionnaireId();
             //保存学生答案
             resp = questionnaireService.studentSumbit(questionnaireId, req.getStudentId(), req.getQuestionId(),

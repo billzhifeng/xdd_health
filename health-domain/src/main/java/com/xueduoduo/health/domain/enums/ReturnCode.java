@@ -10,7 +10,9 @@ public enum ReturnCode implements BaseEnum {
     DATA_NOT_EXIST(100, "数据不存在"),
     OPERATOR_DATE_ILLEGLE(101, "业务动作时间不正确"),
     DB_ERROR(102, "DB异常"),
-    PARAM_ILLEGLE(103, "参数异常"),;
+    PARAM_ILLEGLE(103, "参数异常"),
+    NOT_LOGIN(104, "未登录"),
+    NO_AUTH(403, "无权限");
     ReturnCode(int code, String desc) {
         this.code = code;
         this.desc = desc;
@@ -21,7 +23,7 @@ public enum ReturnCode implements BaseEnum {
 
     @Override
     public int getCode() {
-        return 0;
+        return this.code;
     }
 
     @Override

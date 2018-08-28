@@ -144,6 +144,15 @@ public class QuestionnaireRepository {
         return convert(src);
     }
 
+    /**
+     * 查询某个问卷byid
+     */
+    public QuestionnaireDO loadQuestionnaireDOById(Long id) {
+        QuestionnaireDO src = dao.selectByPrimaryKey(id);
+        JavaAssert.isTrue(null != src, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + id, HealthException.class);
+        return src;
+    }
+
     private Questionnaire convert(QuestionnaireDO src) {
         Questionnaire tar = new Questionnaire();
         BeanUtils.copyProperties(src, tar);
@@ -280,6 +289,7 @@ public class QuestionnaireRepository {
     public void updateToPublished(Questionnaire src, String userName) {
         //发布检查
         QuestionnaireDO qn = dao.selectByPrimaryKey(src.getId());
+        JavaAssert.isTrue(null != qn, ReturnCode.PARAM_ILLEGLE, "问卷不存在", HealthException.class);
         JavaAssert.isTrue(!qn.getCreateStatus().equals(QuestionnaireStatusType.PUBLISHED.name()),
                 ReturnCode.PARAM_ILLEGLE, "问卷已发布", HealthException.class);
         JavaAssert.isTrue(null != src, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + src.getId(), HealthException.class);

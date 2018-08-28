@@ -383,9 +383,6 @@ public class QuestionnaireController {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
             JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
-            //            //MOCK 
-            //            req.setGradeNo(1);
-            //            //mock
             Page<Questionnaire> page = questionnaireService.questionnaireAnswerSumary(req.getGradeNo(), req.getTitle(),
                     req.getOffSet(), req.getLength(), QuestionnaireType.STUDENT.name());
             resp.setData(page);
@@ -575,6 +572,11 @@ public class QuestionnaireController {
         List<UserQuestionAnswer> gradeAns = userQuestionnaireRepository
                 .loadUserQuestionOptionsAnswers(questionnaire.getId(), null);
         if (CollectionUtils.isNotEmpty(gradeAns)) {
+            //title值
+            JSONArray columns = new JSONArray();
+
+            //-----柱状图数据
+            JSONArray ja = new JSONArray();
 
             //1年级平均 userAnswer 统计-------------------------------------------------------------
             //latitude对应的次数和分值
@@ -592,26 +594,37 @@ public class QuestionnaireController {
                     gradeCounts.put(a.getLatitudeId(), 1);
                 }
             }
-            //年级数值
-            JSONObject gradeScore = new JSONObject(new LinkedHashMap());
-            gradeScore.put("name", "年级");
+
             //年级算平均
             Set<Long> gradeQuestionnairIdSets = gradeScores.keySet();
             List<Long> gradeQuestionnairIds = new ArrayList<Long>();
             gradeQuestionnairIds.addAll(gradeQuestionnairIdSets);
             Collections.sort(gradeQuestionnairIds, Comparator.comparing(Long::intValue).reversed());
-            for (Long latiId : gradeQuestionnairIds) {
-                BigDecimal scoreAvg = new BigDecimal(0.0d);
-                int count = gradeCounts.get(latiId);
-                BigDecimal sco = gradeScores.get(latiId);
-                if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
-                    scoreAvg = new BigDecimal(0.0d);
-                } else {
-                    scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
-                }
+            if (CollectionUtils.isNotEmpty(gradeQuestionnairIds)) {
+                int order = 0;
+                columns.add(order, "name");
+                order++;
 
-                //一个维度的平均
-                gradeScore.put(latiMap.get(latiId), scoreAvg);
+                //年级数值
+                JSONObject gradeScore = new JSONObject(new LinkedHashMap());
+                gradeScore.put("name", "年级");
+                for (Long latiId : gradeQuestionnairIds) {
+                    BigDecimal scoreAvg = new BigDecimal(0.0d);
+                    int count = gradeCounts.get(latiId);
+                    BigDecimal sco = gradeScores.get(latiId);
+                    if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
+                        scoreAvg = new BigDecimal(0.0d);
+                    } else {
+                        scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
+                    }
+
+                    //一个维度的平均
+                    gradeScore.put(latiMap.get(latiId), scoreAvg);
+
+                    columns.add(order, latiMap.get(latiId));
+                    order++;
+                }
+                ja.add(gradeScore);
             }
 
             //2班级平均-----------------------------------------------------------
@@ -621,11 +634,8 @@ public class QuestionnaireController {
             Map<Long, Integer> classCounts = new HashMap<Long, Integer>();
             for (UserQuestionAnswer a : gradeAns) {
 
-                User stu = userRepository.loadUserById(a.getUserId());
-                JavaAssert.isTrue(null != stu, ReturnCode.PARAM_ILLEGLE, "ID=" + a.getUserId() + "的学生不存在",
-                        HealthException.class);
                 //只要同班
-                if (classNo != stu.getClassNo()) {
+                if (classNo != a.getClassNo()) {
                     continue;
                 }
 
@@ -640,28 +650,31 @@ public class QuestionnaireController {
                     classCounts.put(a.getLatitudeId(), 1);
                 }
             }
-            //年级数值
-            JSONObject classScore = new JSONObject(new LinkedHashMap());
-            classScore.put("name", "班级");
+
             //年级算平均
             Set<Long> classQuestionnairIdSets = classScores.keySet();
             List<Long> classQuestionnairIds = new ArrayList<Long>();
             classQuestionnairIds.addAll(classQuestionnairIdSets);
             Collections.sort(classQuestionnairIds, Comparator.comparing(Long::intValue).reversed());
-            for (Long latiId : classQuestionnairIds) {
-                BigDecimal scoreAvg = new BigDecimal(0.0d);
-                int count = classCounts.get(latiId);
-                BigDecimal sco = classScores.get(latiId);
-                if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
-                    scoreAvg = new BigDecimal(0.0d);
-                } else {
-                    scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
+            if (CollectionUtils.isNotEmpty(classQuestionnairIds)) {
+                //年级数值
+                JSONObject classScore = new JSONObject(new LinkedHashMap());
+                classScore.put("name", "班级");
+                for (Long latiId : classQuestionnairIds) {
+                    BigDecimal scoreAvg = new BigDecimal(0.0d);
+                    int count = classCounts.get(latiId);
+                    BigDecimal sco = classScores.get(latiId);
+                    if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
+                        scoreAvg = new BigDecimal(0.0d);
+                    } else {
+                        scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
+                    }
+
+                    //一个班级的维度的平均
+                    classScore.put(latiMap.get(latiId), scoreAvg);
                 }
-
-                //一个班级的维度的平均
-                classScore.put(latiMap.get(latiId), scoreAvg);
+                ja.add(classScore);
             }
-
             //3个人------------------------------
             //userAnswer 统计
             List<UserQuestionAnswer> ans = userQuestionnaireRepository
@@ -670,54 +683,47 @@ public class QuestionnaireController {
             //latitude对应的次数和分值
             Map<Long, BigDecimal> scores = new HashMap<Long, BigDecimal>();
             Map<Long, Integer> counts = new HashMap<Long, Integer>();
-            for (UserQuestionAnswer a : ans) {
-                if (null != scores.get(a.getLatitudeId())) {
-                    BigDecimal add = scores.get(a.getLatitudeId()).add(a.getScore());
-                    scores.put(a.getLatitudeId(), add);
+            if (CollectionUtils.isNotEmpty(ans)) {
+                for (UserQuestionAnswer a : ans) {
+                    if (null != scores.get(a.getLatitudeId())) {
+                        BigDecimal add = scores.get(a.getLatitudeId()).add(a.getScore());
+                        scores.put(a.getLatitudeId(), add);
 
-                    int count = counts.get(a.getLatitudeId()) + 1;
-                    counts.put(a.getLatitudeId(), count);
-                } else {
-                    scores.put(a.getLatitudeId(), a.getScore());
-                    counts.put(a.getLatitudeId(), 1);
+                        int count = counts.get(a.getLatitudeId()) + 1;
+                        counts.put(a.getLatitudeId(), count);
+                    } else {
+                        scores.put(a.getLatitudeId(), a.getScore());
+                        counts.put(a.getLatitudeId(), 1);
+                    }
                 }
             }
 
-            //title值
-            JSONArray columns = new JSONArray();
-            //个人数值
-            JSONObject personalScore = new JSONObject(new LinkedHashMap());
-            int order = 0;
-            personalScore.put("name", "个人");
-            columns.add(order, "name");
-            order++;
             //一个问卷结束 算平均
             Set<Long> latitudeIdSets = scores.keySet();
             List<Long> latitudeIds = new ArrayList<Long>();
             latitudeIds.addAll(latitudeIdSets);
             Collections.sort(latitudeIds, Comparator.comparing(Long::intValue).reversed());
-            for (Long latiId : latitudeIds) {
-                BigDecimal scoreAvg = new BigDecimal(0.0d);
-                int count = counts.get(latiId);
-                BigDecimal sco = scores.get(latiId);
-                if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
-                    scoreAvg = new BigDecimal(0.0d);
-                } else {
-                    scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
+            if (CollectionUtils.isNotEmpty(latitudeIds)) {
+                //个人数值
+                JSONObject personalScore = new JSONObject(new LinkedHashMap());
+                personalScore.put("name", "个人");
+
+                for (Long latiId : latitudeIds) {
+                    BigDecimal scoreAvg = new BigDecimal(0.0d);
+                    int count = counts.get(latiId);
+                    BigDecimal sco = scores.get(latiId);
+                    if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
+                        scoreAvg = new BigDecimal(0.0d);
+                    } else {
+                        scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
+                    }
+
+                    //一个维度的平均
+                    personalScore.put(latiMap.get(latiId), scoreAvg);
+
                 }
-
-                //一个维度的平均
-                personalScore.put(latiMap.get(latiId), scoreAvg);
-                columns.add(order, latiMap.get(latiId));
-                order++;
+                ja.add(personalScore);
             }
-
-            //-----柱状图数据
-            JSONArray ja = new JSONArray();
-            ja.add(gradeScore);
-            ja.add(classScore);
-            ja.add(personalScore);
-
             JSONObject teacherData = new JSONObject();
             teacherData.put("columns", columns);
             teacherData.put("rows", ja);
@@ -732,99 +738,12 @@ public class QuestionnaireController {
         List<UserQuestionAnswer> gradeAns = userQuestionnaireRepository
                 .loadUserQuestionOptionsAnswers(req.getQuestionnaireId(), null);
         if (CollectionUtils.isNotEmpty(gradeAns)) {
-
-            //1年级平均 userAnswer 统计-------------------------------------------------------------
-            //latitude对应的次数和分值
-            Map<Long, BigDecimal> gradeScores = new HashMap<Long, BigDecimal>();
-            Map<Long, Integer> gradeCounts = new HashMap<Long, Integer>();
-            for (UserQuestionAnswer a : gradeAns) {
-                if (null != gradeScores.get(a.getLatitudeId())) {
-                    BigDecimal add = gradeScores.get(a.getLatitudeId()).add(a.getScore());
-                    gradeScores.put(a.getLatitudeId(), add);
-
-                    int count = gradeCounts.get(a.getLatitudeId()) + 1;
-                    gradeCounts.put(a.getLatitudeId(), count);
-                } else {
-                    gradeScores.put(a.getLatitudeId(), a.getScore());
-                    gradeCounts.put(a.getLatitudeId(), 1);
-                }
-            }
-            //年级数值
-            JSONObject gradeScore = new JSONObject(new LinkedHashMap());
-            gradeScore.put("name", "年级");
-            //年级算平均
-            Set<Long> gradeQuestionnairIdSets = gradeScores.keySet();
-            List<Long> gradeQuestionnairIds = new ArrayList<Long>();
-            gradeQuestionnairIds.addAll(gradeQuestionnairIdSets);
-            Collections.sort(gradeQuestionnairIds, Comparator.comparing(Long::intValue).reversed());
-            for (Long latiId : gradeQuestionnairIds) {
-                BigDecimal scoreAvg = new BigDecimal(0.0d);
-                int count = gradeCounts.get(latiId);
-                BigDecimal sco = gradeScores.get(latiId);
-                if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
-                    scoreAvg = new BigDecimal(0.0d);
-                } else {
-                    scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
-                }
-
-                //一个维度的平均
-                gradeScore.put(latiMap.get(latiId), scoreAvg);
-            }
-
-            //2班级平均-----------------------------------------------------------
-            //latitude对应的次数和分值
+            //年级 班级 个人数组
+            JSONArray ja = new JSONArray();
+            //title值
+            JSONArray columns = new JSONArray();
             int classNo = student.getClassNo();
-            Map<Long, BigDecimal> classScores = new HashMap<Long, BigDecimal>();
-            Map<Long, Integer> classCounts = new HashMap<Long, Integer>();
-            for (UserQuestionAnswer a : gradeAns) {
-
-                User stu = userRepository.loadUserById(a.getUserId());
-                JavaAssert.isTrue(null != stu, ReturnCode.PARAM_ILLEGLE, "ID=" + a.getUserId() + "的学生不存在",
-                        HealthException.class);
-                //只要同班
-                if (classNo != stu.getClassNo()) {
-                    continue;
-                }
-
-                if (null != classScores.get(a.getLatitudeId())) {
-                    BigDecimal add = classScores.get(a.getLatitudeId()).add(a.getScore());
-                    classScores.put(a.getLatitudeId(), add);
-
-                    int count = classCounts.get(a.getLatitudeId()) + 1;
-                    classCounts.put(a.getLatitudeId(), count);
-                } else {
-                    classScores.put(a.getLatitudeId(), a.getScore());
-                    classCounts.put(a.getLatitudeId(), 1);
-                }
-            }
-            //年级数值
-            JSONObject classScore = new JSONObject(new LinkedHashMap());
-            classScore.put("name", "班级");
-            //年级算平均
-            Set<Long> classQuestionnairIdSets = classScores.keySet();
-            List<Long> classQuestionnairIds = new ArrayList<Long>();
-            classQuestionnairIds.addAll(classQuestionnairIdSets);
-            Collections.sort(classQuestionnairIds, Comparator.comparing(Long::intValue).reversed());
-            for (Long latiId : classQuestionnairIds) {
-                BigDecimal scoreAvg = new BigDecimal(0.0d);
-                int count = classCounts.get(latiId);
-                BigDecimal sco = classScores.get(latiId);
-                if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
-                    scoreAvg = new BigDecimal(0.0d);
-                } else {
-                    scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
-                }
-
-                //一个班级的维度的平均
-                classScore.put(latiMap.get(latiId), scoreAvg);
-            }
-
-            //3个人------------------------------
-            //----------学生问卷纬度分数描述----------------------
-            List<QuestionnaireLatitudeScore> qls = questionnaireRepository
-                    .loadQuestionnaireLatitudeScore(req.getQuestionnaireId());
-
-            //userAnswer 统计
+            //个人 userAnswer 统计
             List<UserQuestionAnswer> ans = userQuestionnaireRepository
                     .loadUserQuestionOptionsAnswers(req.getQuestionnaireId(), req.getStudentId());
 
@@ -846,56 +765,148 @@ public class QuestionnaireController {
                 }
             }
 
+            //1年级平均 userAnswer 统计-------------------------------------------------------------
+            //latitude对应的次数和分值
+            Map<Long, BigDecimal> gradeScores = new HashMap<Long, BigDecimal>();
+            Map<Long, Integer> gradeCounts = new HashMap<Long, Integer>();
+            for (UserQuestionAnswer a : gradeAns) {
+                if (null != gradeScores.get(a.getLatitudeId())) {
+                    BigDecimal add = gradeScores.get(a.getLatitudeId()).add(a.getScore());
+                    gradeScores.put(a.getLatitudeId(), add);
+
+                    int count = gradeCounts.get(a.getLatitudeId()) + 1;
+                    gradeCounts.put(a.getLatitudeId(), count);
+                } else {
+                    gradeScores.put(a.getLatitudeId(), a.getScore());
+                    gradeCounts.put(a.getLatitudeId(), 1);
+                }
+            }
+            //年级数值
+            JSONObject gradeScore = new JSONObject(new LinkedHashMap());
+            gradeScore.put("name", "年级");
+            //年级算平均
+            Set<Long> gradeQuestionnairIdSets = gradeScores.keySet();
+            List<Long> gradeQuestionnairIds = new ArrayList<Long>();
+            gradeQuestionnairIds.addAll(gradeQuestionnairIdSets);
+            Collections.sort(gradeQuestionnairIds, Comparator.comparing(Long::intValue).reversed());
+            if (CollectionUtils.isNotEmpty(gradeQuestionnairIds)) {
+                int order = 0;
+
+                columns.add(order, "name");
+                order++;
+
+                for (Long latiId : gradeQuestionnairIds) {
+                    BigDecimal scoreAvg = new BigDecimal(0.0d);
+                    int count = gradeCounts.get(latiId);
+                    BigDecimal sco = gradeScores.get(latiId);
+                    if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
+                        scoreAvg = new BigDecimal(0.0d);
+                    } else {
+                        scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
+                    }
+
+                    //一个维度的平均
+                    gradeScore.put(latiMap.get(latiId), scoreAvg);
+                    columns.add(order, latiMap.get(latiId));
+                    order++;
+                }
+                ja.add(gradeScore);
+            }
+            //2班级平均-----------------------------------------------------------
+            //latitude对应的次数和分值
+            Map<Long, BigDecimal> classScores = new HashMap<Long, BigDecimal>();
+            Map<Long, Integer> classCounts = new HashMap<Long, Integer>();
+            for (UserQuestionAnswer a : gradeAns) {
+
+                //只要同班
+                if (classNo != a.getClassNo()) {
+                    continue;
+                }
+
+                if (null != classScores.get(a.getLatitudeId())) {
+                    BigDecimal add = classScores.get(a.getLatitudeId()).add(a.getScore());
+                    classScores.put(a.getLatitudeId(), add);
+
+                    int count = classCounts.get(a.getLatitudeId()) + 1;
+                    classCounts.put(a.getLatitudeId(), count);
+                } else {
+                    classScores.put(a.getLatitudeId(), a.getScore());
+                    classCounts.put(a.getLatitudeId(), 1);
+                }
+            }
+            //班级数值
+            JSONObject classScore = new JSONObject(new LinkedHashMap());
+            //班级算平均
+            Set<Long> classQuestionnairIdSets = classScores.keySet();
+            List<Long> classQuestionnairIds = new ArrayList<Long>();
+            classQuestionnairIds.addAll(classQuestionnairIdSets);
+            Collections.sort(classQuestionnairIds, Comparator.comparing(Long::intValue).reversed());
+            if (CollectionUtils.isNotEmpty(classQuestionnairIds)) {
+                classScore.put("name", "班级");
+                for (Long latiId : classQuestionnairIds) {
+                    BigDecimal scoreAvg = new BigDecimal(0.0d);
+                    int count = classCounts.get(latiId);
+                    BigDecimal sco = classScores.get(latiId);
+                    if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
+                        scoreAvg = new BigDecimal(0.0d);
+                    } else {
+                        scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
+                    }
+
+                    //一个班级的维度的平均
+                    classScore.put(latiMap.get(latiId), scoreAvg);
+                }
+                ja.add(classScore);
+            }
+
+            //3个人------------------------------
+            //----------学生问卷纬度分数描述----------------------
+            List<QuestionnaireLatitudeScore> qls = questionnaireRepository
+                    .loadQuestionnaireLatitudeScore(req.getQuestionnaireId());
+
             //个人纬度描述说明
             JSONArray descs = new JSONArray();
-            //title值
-            JSONArray columns = new JSONArray();
+
             //个人数值
             JSONObject personalScore = new JSONObject(new LinkedHashMap());
-            int order = 0;
-            personalScore.put("name", "个人");
-            columns.add(order, "name");
-            order++;
+
             //一个问卷结束 算平均
             Set<Long> latitudeIdSets = scores.keySet();
             List<Long> latitudeIds = new ArrayList<Long>();
             latitudeIds.addAll(latitudeIdSets);
             Collections.sort(latitudeIds, Comparator.comparing(Long::intValue).reversed());
-            for (Long latiId : latitudeIds) {
-                BigDecimal scoreAvg = new BigDecimal(0.0d);
-                int count = counts.get(latiId);
-                BigDecimal sco = scores.get(latiId);
-                if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
-                    scoreAvg = new BigDecimal(0.0d);
-                } else {
-                    scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
-                }
+            if (CollectionUtils.isNotEmpty(latitudeIds)) {
+                personalScore.put("name", "个人");
 
-                //一个维度的平均
-                personalScore.put(latiMap.get(latiId), scoreAvg);
-                columns.add(order, latiMap.get(latiId));
-                order++;
-
-                for (QuestionnaireLatitudeScore desc : qls) {
-                    if (desc.getLatitudeId().longValue() == latiId.longValue()
-                            && (nullToZero(desc.getScoreMin()).compareTo(nullToZero(scoreAvg)) <= 0
-                                    && nullToZero(desc.getScoreMax()).compareTo(nullToZero(scoreAvg)) >= 0)) {
-                        JSONObject jo = new JSONObject();
-                        jo.put("latitudeName", latiMap.get(latiId));
-                        jo.put("latitudeScore", scoreAvg);
-                        jo.put("latitudeDesc", desc.getComment());
-                        descs.add(jo);
+                for (Long latiId : latitudeIds) {
+                    BigDecimal scoreAvg = new BigDecimal(0.0d);
+                    int count = counts.get(latiId);
+                    BigDecimal sco = scores.get(latiId);
+                    if (BigDecimal.ZERO.compareTo(sco) == 0 || count == 0) {
+                        scoreAvg = new BigDecimal(0.0d);
+                    } else {
+                        scoreAvg = sco.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
                     }
+
+                    //一个维度的平均
+                    personalScore.put(latiMap.get(latiId), scoreAvg);
+
+                    for (QuestionnaireLatitudeScore desc : qls) {
+                        if (desc.getLatitudeId().longValue() == latiId.longValue()
+                                && (nullToZero(desc.getScoreMin()).compareTo(nullToZero(scoreAvg)) <= 0
+                                        && nullToZero(desc.getScoreMax()).compareTo(nullToZero(scoreAvg)) >= 0)) {
+                            JSONObject jo = new JSONObject();
+                            jo.put("latitudeName", latiMap.get(latiId));
+                            jo.put("latitudeScore", scoreAvg);
+                            jo.put("latitudeDesc", desc.getComment());
+                            descs.add(jo);
+                        }
+                    }
+
                 }
-
+                ja.add(personalScore);
             }
-
             //-----个人雷达图数据
-            JSONArray ja = new JSONArray();
-            ja.add(gradeScore);
-            ja.add(classScore);
-            ja.add(personalScore);
-
             JSONObject personData = new JSONObject();
             personData.put("columns", columns);
             personData.put("rows", ja);

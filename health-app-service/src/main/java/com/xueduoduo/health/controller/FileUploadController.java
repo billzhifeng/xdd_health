@@ -48,6 +48,9 @@ public class FileUploadController {
     @Autowired
     private UserRepository      userRepository;
 
+    @Value("${spring.profiles.active}")
+    private String              springProfilesActive;
+
     @RequestMapping(value = "/file/upload", method = RequestMethod.POST)
     public BaseResp upload(@RequestParam(value = "file") MultipartFile file) {
 
@@ -68,7 +71,11 @@ public class FileUploadController {
                     dest.getParentFile().mkdirs();
                 }
                 file.transferTo(dest);
-                resp.setData("/files/" + returnUrl);
+                if ("dev".equals(springProfilesActive)) {
+                    resp.setData("/files/" + returnUrl);
+                } else {
+                    resp.setData("/data/heartTest/files/" + returnUrl);
+                }
             } catch (FileNotFoundException e) {
                 logger.error("文件上传失败", e);
                 resp = BaseResp.buildFailResp("上传失败", BaseResp.class);
@@ -110,8 +117,7 @@ public class FileUploadController {
                     }
                     //循环列cell
                     int totalCellNums = xRow.getLastCellNum();
-                    JavaAssert.isTrue(6 == totalCellNums, ReturnCode.PARAM_ILLEGLE, "教师文件格式不正常,只允许6列",
-                            HealthException.class);
+
                     for (int numCell = 0; numCell < totalCellNums; numCell++) {
                         XSSFCell cell = xRow.getCell(numCell);
                         JavaAssert.isTrue(null != cell, ReturnCode.PARAM_ILLEGLE, "教师文件存在空白列", HealthException.class);
@@ -152,8 +158,7 @@ public class FileUploadController {
                     }
                     //循环列cell
                     int totalCellNums = xRow.getLastCellNum();
-                    JavaAssert.isTrue(6 == totalCellNums, ReturnCode.PARAM_ILLEGLE, "教师文件格式不正常,只允许6列",
-                            HealthException.class);
+
                     User t = new User();
                     for (int numCell = 0; numCell < totalCellNums; numCell++) {
                         XSSFCell cell = xRow.getCell(numCell);
@@ -259,8 +264,7 @@ public class FileUploadController {
                     }
                     //循环列cell
                     int totalCellNums = xRow.getLastCellNum();
-                    JavaAssert.isTrue(7 == totalCellNums, ReturnCode.PARAM_ILLEGLE, "学生文件格式不正常,只允许6列",
-                            HealthException.class);
+
                     for (int numCell = 0; numCell < totalCellNums; numCell++) {
                         XSSFCell cell = xRow.getCell(numCell);
                         JavaAssert.isTrue(null != cell, ReturnCode.PARAM_ILLEGLE, "学生文件存在空白列", HealthException.class);
@@ -301,8 +305,7 @@ public class FileUploadController {
                     }
                     //循环列cell
                     int totalCellNums = xRow.getLastCellNum();
-                    JavaAssert.isTrue(7 == totalCellNums, ReturnCode.PARAM_ILLEGLE, "学生文件格式不正常,只允许6列",
-                            HealthException.class);
+
                     User t = new User();
                     for (int numCell = 0; numCell < totalCellNums; numCell++) {
                         XSSFCell cell = xRow.getCell(numCell);

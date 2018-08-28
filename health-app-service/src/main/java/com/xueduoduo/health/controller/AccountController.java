@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -113,6 +114,9 @@ public class AccountController {
             u.setPassword(req.getPasswd());
             u.setRole(UserRoleType.STUDENT.name());
             userRepository.saveUser(u);
+        } catch (DuplicateKeyException e) {
+            logger.error("添加学生账号异常,主键冲突", e);
+            resp = BaseResp.buildFailResp("添加学生账号异常.学生账号" + req.getAccountNo() + "已存在", BaseResp.class);
         } catch (HealthException e) {
             logger.error("添加学生账号异常", e);
             resp = BaseResp.buildFailResp("添加学生账号异常." + e.getReturnMsg(), BaseResp.class);
@@ -120,6 +124,7 @@ public class AccountController {
             logger.error("添加学生账号异常", e);
             resp = BaseResp.buildFailResp("添加学生账号异常", BaseResp.class);
         }
+        logger.info("添加学生账号返回:{},req:{}", resp, req);
         return resp;
     }
 
@@ -137,7 +142,6 @@ public class AccountController {
             JavaAssert.isTrue(req.getClassNo() > 0, ReturnCode.PARAM_ILLEGLE, "学生班级不能为空", HealthException.class);
             JavaAssert.isTrue(null != req.getUserName(), ReturnCode.PARAM_ILLEGLE, "学生姓名不能为空", HealthException.class);
             JavaAssert.isTrue(null != req.getGender(), ReturnCode.PARAM_ILLEGLE, "学生性别不能为空", HealthException.class);
-            JavaAssert.isTrue(null != req.getPasswd(), ReturnCode.PARAM_ILLEGLE, "学生密码不能为空", HealthException.class);
             JavaAssert.isTrue(null != req.getStudentId(), ReturnCode.PARAM_ILLEGLE, "学生ID不能为空", HealthException.class);
 
             User u = new User();
@@ -148,7 +152,6 @@ public class AccountController {
             u.setClassNo(req.getClassNo());
             u.setUserName(req.getUserName());
             u.setGender(req.getGender());
-            u.setPassword(req.getPasswd());
             userRepository.updateStudent(u);
         } catch (HealthException e) {
             logger.error("编辑学生账号异常", e);
@@ -234,6 +237,9 @@ public class AccountController {
                 u.setRole(UserRoleType.TEACHER.name());
             }
             userRepository.saveUser(u);
+        } catch (DuplicateKeyException e) {
+            logger.error("添加教师账号异常,主键冲突", e);
+            resp = BaseResp.buildFailResp("添加教师账号异常.学生账号" + req.getAccountNo() + "已存在", BaseResp.class);
         } catch (HealthException e) {
             logger.error("添加教师账号异常", e);
             resp = BaseResp.buildFailResp("添加教师账号异常." + e.getReturnMsg(), BaseResp.class);
@@ -286,12 +292,20 @@ public class AccountController {
      * 教师账号列表
      */
     @RequestMapping(value = "admin/account/teacher/list", method = RequestMethod.POST)
-    public BaseResp teacherList(@RequestBody StudentReportReq req) {
+    public BaseResp teacherList(@RequestBody AcctReq req) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
             List<String> roles = new ArrayList<String>();
-            roles.add(UserRoleType.TEACHER.name());
-            roles.add(UserRoleType.CLASS_HEADER.name());
+            if (StringUtils.isNoneBlank(req.getPosition())) {
+                if (UserRoleType.TEACHER.name().equals(req.getPosition())) {
+                    roles.add(UserRoleType.TEACHER.name());
+                } else if (UserRoleType.CLASS_HEADER.name().equals(req.getPosition())) {
+                    roles.add(UserRoleType.CLASS_HEADER.name());
+                }
+            } else {
+                roles.add(UserRoleType.TEACHER.name());
+                roles.add(UserRoleType.CLASS_HEADER.name());
+            }
             JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
             Page<User> users = userRepository.loadUser(req.getGradeNo(), req.getClassNo(), req.getUserName(),
                     req.getOffSet(), req.getLength(), roles, true, "TEACHER");
@@ -350,11 +364,6 @@ public class AccountController {
             u.setHeaderImg(req.getHeadImgUrl());
 
             if (StringUtils.isNoneBlank(req.getPasswd())) {
-                JavaAssert.isTrue(StringUtils.isNoneBlank(req.getOriPasswd()), ReturnCode.PARAM_ILLEGLE, "原始密码不能为空",
-                        HealthException.class);
-
-                JavaAssert.isTrue(t.getPassword().equals(req.getOriPasswd()), ReturnCode.PARAM_ILLEGLE, "原始密码不正确",
-                        HealthException.class);
                 u.setPassword(req.getPasswd());
             }
             userRepository.updateTheacherWithoutClass(u);
@@ -365,6 +374,27 @@ public class AccountController {
         } catch (Exception e) {
             logger.error("编辑教师个人中心异常", e);
             resp = BaseResp.buildFailResp("编辑教师个人中心异常", BaseResp.class);
+        }
+        return resp;
+    }
+
+    /**
+     * 教师、班主任年级班级获取
+     */
+    @RequestMapping(value = "admin/account/gradeClass/view", method = RequestMethod.POST)
+    public BaseResp showGradeClass(@RequestBody AcctReq req) {
+        BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
+        try {
+            JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
+            JavaAssert.isTrue(null != req.getTeacherId(), ReturnCode.PARAM_ILLEGLE, "教师ID不能为空", HealthException.class);
+            List<GradeClass> gcs = userRepository.loadGradeClassByTeacherId(req.getTeacherId());
+            resp.setData(gcs);
+        } catch (HealthException e) {
+            logger.error("教师、班主任年级班级获取异常", e);
+            resp = BaseResp.buildFailResp("教师、班主任年级班级获取异常." + e.getReturnMsg(), BaseResp.class);
+        } catch (Exception e) {
+            logger.error("教师、班主任年级班级获取异常", e);
+            resp = BaseResp.buildFailResp("教师、班主任年级班级获取异常", BaseResp.class);
         }
         return resp;
     }
@@ -418,11 +448,18 @@ public class AccountController {
                     req.getClassNo());
             JavaAssert.isTrue(CollectionUtils.isEmpty(ugs), ReturnCode.PARAM_ILLEGLE, "该教师已存在该年级和班级",
                     HealthException.class);
+
+            if (t.getRole().equals(UserRoleType.CLASS_HEADER.name())) {
+                List<GradeClass> cgs = userRepository.loadGradeClassByTeacherId(t.getId());
+                JavaAssert.isTrue(CollectionUtils.isEmpty(cgs), ReturnCode.PARAM_ILLEGLE, "该班主任已经绑定年级和班级",
+                        HealthException.class);
+            }
+
             userRepository.saveTheacherClass(t, req.getGradeNo(), req.getClassNo());
 
         } catch (HealthException e) {
             logger.error("教师个人中心添加班级异常", e);
-            resp = BaseResp.buildFailResp("教师个人中心添加班级异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("教师个人中心添加班级异常", e);
             resp = BaseResp.buildFailResp("教师个人中心添加班级异常", BaseResp.class);

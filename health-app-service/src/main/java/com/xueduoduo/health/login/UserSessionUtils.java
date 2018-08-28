@@ -17,8 +17,8 @@ public class UserSessionUtils {
         user = new User();
         user.setId(1L);
         user.setAccountNo("LV0001");
-        user.setUserName("张三");
-        user.setRole(UserRoleType.TEACHER.name());
+        user.setUserName("管理员");
+        user.setRole(UserRoleType.MASTER.name());
         user.setGender("MALE");
         user.setGradeNo(1);
         user.setClassNo(2);
