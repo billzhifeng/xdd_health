@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +38,8 @@ import com.xueduoduo.health.domain.common.HealthException;
 import com.xueduoduo.health.domain.enums.QuestionnaireStatusType;
 import com.xueduoduo.health.domain.enums.QuestionnaireType;
 import com.xueduoduo.health.domain.enums.ReturnCode;
+import com.xueduoduo.health.domain.enums.UserRoleType;
+import com.xueduoduo.health.domain.grade.GradeClass;
 import com.xueduoduo.health.domain.latitude.Latitude;
 import com.xueduoduo.health.domain.latitude.LatitudeRepository;
 import com.xueduoduo.health.domain.questionnaire.Questionnaire;
@@ -316,7 +320,7 @@ public class QuestionnaireController {
             resp.setData(req.getQuestionnaireId());
         } catch (Exception e) {
             logger.error("设置问卷题目分数纬度异常", e);
-            resp = BaseResp.buildFailResp("设置问卷题目分数纬度异常" + e.getMessage(), BaseResp.class);
+            resp = BaseResp.buildFailResp("设置问卷题目分数纬度异常，" + e.getMessage(), BaseResp.class);
         }
         logger.info("设置分数和纬度,resp:{}", resp);
         return resp;
@@ -483,12 +487,20 @@ public class QuestionnaireController {
      * @return
      */
     @RequestMapping(value = "admin/review/report", method = RequestMethod.POST)
-    public BaseResp questionnairReport(@RequestBody QuestionnaireReq req) {
+    public BaseResp questionnairReport(@RequestBody QuestionnaireReq req, HttpServletRequest request) {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
             JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
-            logger.info("测评报表查询,req :{}", req);
+            logger.info("测评问卷查询,req :{}", req);
 
+            User teacher = (User) request.getSession().getAttribute("userId");
+            int gradeNo = -1;
+            if (UserRoleType.CLASS_HEADER.name().equals(teacher.getRole())) {
+                List<GradeClass> gcs = userRepository.loadGradeClassByTeacherId(teacher.getId());
+                if (CollectionUtils.isNotEmpty(gcs)) {
+                    gradeNo = gcs.get(0).getGradeNo();
+                }
+            }
             Page<Questionnaire> page = questionnaireRepository.loadPage(req.getSchoolYear(), req.getTitle(),
                     req.getOffSet(), req.getLength(), QuestionnaireType.STUDENT.name(), -1);
 
@@ -496,7 +508,12 @@ public class QuestionnaireController {
             if (CollectionUtils.isNotEmpty(page.getPageData())) {
                 for (Questionnaire q : page.getPageData()) {
                     if (q.getCreateStatus().equals(QuestionnaireStatusType.PUBLISHED.name())) {
-                        publishs.add(q);
+                        //班主任默认看到自己的
+                        if (gradeNo > 0 && q.getGradeNo() == gradeNo) {
+                            publishs.add(q);
+                        } else {
+                            publishs.add(q);
+                        }
                     }
                 }
             }
@@ -504,10 +521,10 @@ public class QuestionnaireController {
             resp.setData(page);
 
         } catch (Exception e) {
-            logger.error("测评报表查询异常", e);
-            resp = BaseResp.buildFailResp("测评报表查询异常" + e.getMessage(), BaseResp.class);
+            logger.error("测评问卷查询异常", e);
+            resp = BaseResp.buildFailResp("测评问卷查询异常" + e.getMessage(), BaseResp.class);
         }
-        logger.info("测评报表查询,resp:{}", resp);
+        logger.info("测评问卷查询,resp:{}", resp);
         return resp;
     }
 

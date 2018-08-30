@@ -45,6 +45,9 @@ public class Question {
 
     private List<QuestionOption> options;
 
+    //IMG | TEXT
+    private String               viewType;
+
     public Long getId() {
         return id;
     }
@@ -155,6 +158,14 @@ public class Question {
 
     public void setMaxScore(BigDecimal maxScore) {
         this.maxScore = maxScore;
+    }
+
+    public String getViewType() {
+        return viewType;
+    }
+
+    public void setViewType(String viewType) {
+        this.viewType = viewType;
     }
 
 }

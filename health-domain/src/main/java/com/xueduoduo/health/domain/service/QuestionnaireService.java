@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -88,8 +89,8 @@ public class QuestionnaireService {
 
     private static Map<Integer, String>        notices             = new HashMap<Integer, String>();
     static {
-        notices.put(4, "哇！你真棒！已经完成4道题啦！");
-        notices.put(8, "哇！你真棒！已经完成4道题啦！");
+        //        notices.put(4, "哇！你真棒！已经完成4道题啦！");
+        //        notices.put(8, "哇！你真棒！已经完成4道题啦！");
         //--以上测试
         notices.put(10, "哇！你真棒！已经完成10道题啦！");
         notices.put(20, "看来你完成的很顺利！加油哦！");
@@ -544,6 +545,9 @@ public class QuestionnaireService {
                 QuestionOption option = options.get(j);
                 Long optionId = option.getId();//(Integer) option.get("optionId");
                 BigDecimal score = option.getScore();//(BigDecimal) option.get("score");
+                if (null == score) {
+                    throw new HealthException(ReturnCode.PARAM_ILLEGLE, "第" + q.getQuestionNo() + "题分值设置不全");
+                }
                 score.setScale(1);//1位小数
 
                 QuestionOptionDO o = new QuestionOptionDO();
@@ -590,6 +594,7 @@ public class QuestionnaireService {
         QuestionDOExample qea = new QuestionDOExample();
         QuestionDOExample.Criteria qcri = qea.createCriteria();
         qcri.andIsDeletedEqualTo(IsDeleted.N.name());
+        qcri.andQuestionnaireIdEqualTo(qe.getId());
         List<QuestionDO> qs = questionDOMapper.selectByExample(qea);
         JavaAssert.isTrue(!CollectionUtils.isEmpty(qs), ReturnCode.PARAM_ILLEGLE, "文件无题目无法设置纬度描述",
                 HealthException.class);
@@ -809,17 +814,17 @@ public class QuestionnaireService {
             stu.put("studentHeadImgUrl", u.getHeaderImg());
             //学生自己完成测评
             if (answeredStudenIds.contains(u.getId().longValue())) {
-                stu.put("studentAnswer", "已测评");
+                stu.put("studentAnswer", "已测");
             } else {
-                stu.put("studentAnswer", "未测评");
+                stu.put("studentAnswer", "未测");
             }
 
             //教师对学生完成测评
             if (alreadyTestStudenIds.contains(u.getId().longValue())) {
-                stu.put("teacherAnswer", "已测评");
+                stu.put("teacherAnswer", "已处理");
             } else {
                 if (null != teQu) {
-                    stu.put("teacherAnswer", "未测评");
+                    stu.put("teacherAnswer", "未处理");
                     stu.put("teacherQuestionnaireId", teQu.getId());
                 } else {
                     stu.put("teacherAnswer", "无问卷");
@@ -996,14 +1001,18 @@ public class QuestionnaireService {
         }
         Collections.sort(questions, Comparator.comparing(Question::getQuestionNo));
         Question question = questions.get(0);
-        json.put("question", question);
 
         //3查询问题所有选项
         List<QuestionOption> options = questionnaireRepository.loadQuestionnaireQuestionQuestionOptions(questionnaireId,
                 question.getId());
         Collections.sort(options, Comparator.comparing(QuestionOption::getOptionNo));
+        if (StringUtils.isNoneBlank(options.get(0).getImgUrl())) {
+            question.setViewType("IMG");
+        } else {
+            question.setViewType("TEXT");
+        }
         json.put("options", options);
-
+        json.put("question", question);
         //4查看学习对该题目答题情况
         UserQuestionAnswerDO userAnswer = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,
                 question.getId());
@@ -1121,9 +1130,7 @@ public class QuestionnaireService {
                 json.put("answerRate", rate);
 
                 if (notices.containsKey(q.getQuestionNo())) {
-
                     json.put("notice", notices.get(q.getQuestionNo()));
-
                 }
 
                 //最后一题
@@ -1145,8 +1152,6 @@ public class QuestionnaireService {
             }
         }
         json.put("totalCount", questions.size());
-
-        json.put("question", showQuestion);
         json.put("preQuestionId", preQuesId);
         json.put("nextQuestionId", nextQuesId);
 
@@ -1155,6 +1160,13 @@ public class QuestionnaireService {
                 showQuestion.getId());
         Collections.sort(options, Comparator.comparing(QuestionOption::getOptionNo));
         json.put("options", options);
+
+        if (StringUtils.isNoneBlank(options.get(0).getImgUrl())) {
+            showQuestion.setViewType("IMG");
+        } else {
+            showQuestion.setViewType("TEXT");
+        }
+        json.put("question", showQuestion);
 
         //6查看学习对该题目答题情况
         UserQuestionAnswerDO userAnswer = userQuestionnaireRepository.loadUserQuestionAnswer(questionnaireId, studentId,

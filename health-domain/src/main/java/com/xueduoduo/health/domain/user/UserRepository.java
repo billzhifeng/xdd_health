@@ -223,8 +223,8 @@ public class UserRepository {
                 for (UserGradeClassDO gc : list) {
 
                     JSONArray g = new JSONArray();
-                    g.add(gc.getGradeNo());
-                    g.add(gc.getClassNo());
+                    g.add(gc.getGradeNo() + "");
+                    g.add(gc.getClassNo() + "");
 
                     gsay.add(g);
 
@@ -285,40 +285,15 @@ public class UserRepository {
         if ("TEACHER".equals(teacherOrStudent)) {
             //名字查询优先
             if (StringUtils.isNoneBlank(userName)) {
-                UserDOExample example = new UserDOExample();
-                UserDOExample.Criteria cri = example.createCriteria();
-                userName = "%" + userName + "%";
-                cri.andUserNameLike(userName);
+                List list = queryTeacherByUserName(userName, offSet, length, userRole, withCount, p);
+                if (CollectionUtils.isEmpty(list)) {
+                    list = queryTeacherByAccount(userName, offSet, length, userRole, withCount, p);
 
-                if (null != userRole && userRole.size() > 0) {
-                    if (userRole.size() == 0) {
-                        cri.andRoleEqualTo(userRole.get(0));
-                    } else {
-                        cri.andRoleIn(userRole);
+                    if (CollectionUtils.isEmpty(list)) {
+                        list = queryTeacherByPhone(userName, offSet, length, userRole, withCount, p);
                     }
                 }
 
-                if (offSet > -1 && length > 0) {
-                    example.setOffSet(offSet);
-                    example.setLength(length);
-
-                    p.setOffSet(offSet);
-                    p.setLength(length);
-                }
-
-                cri.andIsDeletedEqualTo(IsDeleted.N.name());
-                if (withCount) {
-                    Long totalCount = userDOMapper.countByExample(example);
-                    p.setTotalCountNum(totalCount.intValue());
-                }
-
-                List<UserDO> users = userDOMapper.selectByExample(example);
-                List<User> list = new ArrayList<User>();
-                if (CollectionUtils.isNotEmpty(users)) {
-                    for (UserDO src : users) {
-                        list.add(convertToUser(src));
-                    }
-                }
                 p.setPageData(list);
                 return p;
             } else if (gradeNo > 0 || classNo > 0) {//班级年级查询
@@ -425,6 +400,69 @@ public class UserRepository {
         }
     }
 
+    private List<User> queryTeacherByUserName(String userName, int offSet, int length, List<String> userRole,
+                                              boolean withCount, Page<User> p) {
+        UserDOExample example = new UserDOExample();
+        UserDOExample.Criteria cri = example.createCriteria();
+
+        userName = "%" + userName + "%";
+        cri.andUserNameLike(userName);
+        return queryTeachers(userName, offSet, length, userRole, withCount, p, cri, example);
+    }
+
+    private List<User> queryTeacherByAccount(String userName, int offSet, int length, List<String> userRole,
+                                             boolean withCount, Page<User> p) {
+        UserDOExample example = new UserDOExample();
+        UserDOExample.Criteria cri = example.createCriteria();
+        userName = "%" + userName + "%";
+        cri.andAccountNoLike(userName);
+        return queryTeachers(userName, offSet, length, userRole, withCount, p, cri, example);
+    }
+
+    private List<User> queryTeacherByPhone(String userName, int offSet, int length, List<String> userRole,
+                                           boolean withCount, Page<User> p) {
+        UserDOExample example = new UserDOExample();
+        UserDOExample.Criteria cri = example.createCriteria();
+        userName = "%" + userName + "%";
+        cri.andPhoneLike(userName);
+        return queryTeachers(userName, offSet, length, userRole, withCount, p, cri, example);
+    }
+
+    private List<User> queryTeachers(String userName, int offSet, int length, List<String> userRole, boolean withCount,
+                                     Page<User> p, UserDOExample.Criteria cri, UserDOExample example) {
+
+        if (null != userRole && userRole.size() > 0) {
+            if (userRole.size() == 0) {
+                cri.andRoleEqualTo(userRole.get(0));
+            } else {
+                cri.andRoleIn(userRole);
+            }
+        }
+
+        if (offSet > -1 && length > 0) {
+            example.setOffSet(offSet);
+            example.setLength(length);
+
+            p.setOffSet(offSet);
+            p.setLength(length);
+        }
+
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        if (withCount) {
+            Long totalCount = userDOMapper.countByExample(example);
+            p.setTotalCountNum(totalCount.intValue());
+        }
+
+        List<UserDO> users = userDOMapper.selectByExample(example);
+        List<User> list = new ArrayList<User>();
+        if (CollectionUtils.isNotEmpty(users)) {
+            for (UserDO src : users) {
+                list.add(convertToUser(src));
+            }
+        }
+        return list;
+    }
+
     /**
      * 查询年级班级学生 +老师
      */
@@ -458,13 +496,17 @@ public class UserRepository {
         tar.setAddition(src.getGradeNoStr() + "年级" + src.getClassNo() + "班");
         tar.setUserStatus("正常");
         if (StringUtils.isNoneBlank(src.getPosition())) {
-            if (UserRoleType.STUDENT.name().equals(src.getPosition())) {
+            if (UserRoleType.STUDENT.name().equals(src.getPosition())
+                    || UserRoleType.STUDENT.getDesc().equals(src.getPosition())) {
                 tar.setPositionStr(UserRoleType.STUDENT.getDesc());
-            } else if (UserRoleType.TEACHER.name().equals(src.getPosition())) {
+            } else if (UserRoleType.TEACHER.name().equals(src.getPosition())
+                    || UserRoleType.TEACHER.getDesc().equals(src.getPosition())) {
                 tar.setPositionStr(UserRoleType.TEACHER.getDesc());
-            } else if (UserRoleType.MASTER.name().equals(src.getPosition())) {
+            } else if (UserRoleType.MASTER.name().equals(src.getPosition())
+                    || UserRoleType.MASTER.getDesc().equals(src.getPosition())) {
                 tar.setPositionStr(UserRoleType.MASTER.getDesc());
-            } else if (UserRoleType.CLASS_HEADER.name().equals(src.getPosition())) {
+            } else if (UserRoleType.CLASS_HEADER.name().equals(src.getPosition())
+                    || UserRoleType.CLASS_HEADER.getDesc().equals(src.getPosition())) {
                 tar.setPositionStr(UserRoleType.CLASS_HEADER.getDesc());
             }
 
@@ -476,6 +518,14 @@ public class UserRepository {
         User tar = new User();
         BeanUtils.copyProperties(src, tar);
         tar.setUserStatus("正常");
+        if (StringUtils.isNoneBlank(src.getPosition())) {
+            if (UserRoleType.TEACHER.name().equals(src.getPosition())) {
+                tar.setPositionStr(UserRoleType.TEACHER.getDesc());
+            } else if (UserRoleType.CLASS_HEADER.name().equals(src.getPosition())) {
+                tar.setPositionStr(UserRoleType.CLASS_HEADER.getDesc());
+            }
+
+        }
         return tar;
     }
 

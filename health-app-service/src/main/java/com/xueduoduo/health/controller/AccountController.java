@@ -233,8 +233,10 @@ public class AccountController {
 
             if (UserRoleType.CLASS_HEADER.name().equals(req.getPosition())) {
                 u.setRole(UserRoleType.CLASS_HEADER.name());
-            } else {
+            } else if (UserRoleType.TEACHER.name().equals(req.getPosition())) {
                 u.setRole(UserRoleType.TEACHER.name());
+            } else if (UserRoleType.MASTER.name().equals(req.getPosition())) {
+                u.setRole(UserRoleType.MASTER.name());
             }
             userRepository.saveUser(u);
         } catch (DuplicateKeyException e) {
@@ -301,10 +303,13 @@ public class AccountController {
                     roles.add(UserRoleType.TEACHER.name());
                 } else if (UserRoleType.CLASS_HEADER.name().equals(req.getPosition())) {
                     roles.add(UserRoleType.CLASS_HEADER.name());
+                } else if (UserRoleType.MASTER.name().equals(req.getPosition())) {
+                    roles.add(UserRoleType.MASTER.name());
                 }
             } else {
                 roles.add(UserRoleType.TEACHER.name());
                 roles.add(UserRoleType.CLASS_HEADER.name());
+                roles.add(UserRoleType.MASTER.name());
             }
             JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
             Page<User> users = userRepository.loadUser(req.getGradeNo(), req.getClassNo(), req.getUserName(),
@@ -362,6 +367,7 @@ public class AccountController {
             u.setPhone(req.getPhone());
             u.setGender(req.getGender());
             u.setHeaderImg(req.getHeadImgUrl());
+            u.setPosition(req.getPosition());
 
             if (StringUtils.isNoneBlank(req.getPasswd())) {
                 u.setPassword(req.getPasswd());

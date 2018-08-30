@@ -34,6 +34,10 @@ public class User extends Printable {
 
     private Integer          classNo;
 
+    private String           gradeNoStr;
+
+    private String           classNoStr;
+
     private String           password;
 
     private String           phone;
@@ -249,6 +253,14 @@ public class User extends Printable {
 
     public void setPositionStr(String positionStr) {
         this.positionStr = positionStr;
+    }
+
+    public String getGradeNoStr() {
+        return gradeNo + "";
+    }
+
+    public String getClassNoStr() {
+        return classNo + "";
     }
 
 }
