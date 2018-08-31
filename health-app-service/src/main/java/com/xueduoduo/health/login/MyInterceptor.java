@@ -58,8 +58,6 @@ public class MyInterceptor implements HandlerInterceptor {
                 User u = (User) session.getAttribute("userId");
                 String uri = request.getRequestURI();
                 uri = uri.substring(1, uri.length());
-                //                logger.info("auth--> uri:{},role:{},userName:{},accountNo:{},userId:{}", uri, u.getRole(),
-                //                        u.getUserName(), u.getAccountNo(), u.getId());
                 String role = u.getRole();
                 if ("MASTER".equals(role)) {
                     return true;
@@ -77,6 +75,7 @@ public class MyInterceptor implements HandlerInterceptor {
             }
             return true;
         }
+
     }
 
     @Override

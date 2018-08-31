@@ -29,7 +29,6 @@ public class CorsConfiguration {
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.setAllowCredentials(true);
-        //        corsConfiguration.addExposedHeader("SESSIONID");
         return corsConfiguration;
     }
 
