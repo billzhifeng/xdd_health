@@ -116,6 +116,9 @@ public class QuestionnaireController {
             User user = UserSessionUtils.getUserFromSession();
             Long id = questionnaireRepository.save(user.getUserName(), req.getQuestionnaireType());
             resp.setData(id);
+        } catch (HealthException e) {
+            logger.error("添加问卷异常", e);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("添加问卷异常", e);
             resp = BaseResp.buildFailResp("添加问卷异常" + e.getMessage(), BaseResp.class);
@@ -141,7 +144,7 @@ public class QuestionnaireController {
             resp.setData(newId);
         } catch (HealthException e) {
             logger.error("复制问卷异常", e);
-            resp = BaseResp.buildFailResp("复制问卷异常" + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("复制问卷异常", e);
             resp = BaseResp.buildFailResp("复制问卷异常" + e.getMessage(), BaseResp.class);
@@ -158,7 +161,6 @@ public class QuestionnaireController {
         BaseResp resp = BaseResp.buildSuccessResp(BaseResp.class);
         try {
             JavaAssert.isTrue(null != req, ReturnCode.PARAM_ILLEGLE, "请求不能为空", HealthException.class);
-            //TODO 加图片
             logger.info("展示添加编辑问卷题目选项,请求questionnaireId:{}", req.getQuestionnaireId());
             JavaAssert.isTrue(null != req.getQuestionnaireId(), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
                     HealthException.class);
@@ -195,7 +197,7 @@ public class QuestionnaireController {
             resp.setData(req.getQuestionnaireId());
         } catch (HealthException e) {
             logger.error("保存问卷题目异常", e);
-            resp = BaseResp.buildFailResp(e.getReturnMsg() + ",已发布问卷不能编辑", BaseResp.class);
+            resp = BaseResp.buildFailResp("已发布问卷不能编辑", BaseResp.class);
         } catch (Exception e) {
             logger.error("保存问卷题目异常", e);
             resp = BaseResp.buildFailResp("保存问卷题目异常", BaseResp.class);
@@ -219,7 +221,8 @@ public class QuestionnaireController {
                     HealthException.class);
             JavaAssert.isTrue(null != req.getQuestionnaireId(), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
                     HealthException.class);
-            JavaAssert.isTrue(req.getGradeNo() > -1, ReturnCode.PARAM_ILLEGLE, "问卷对应年级不能为空", HealthException.class);
+            JavaAssert.isTrue(null != req.getGradeNos() && req.getGradeNos().size() > 0, ReturnCode.PARAM_ILLEGLE,
+                    "问卷对应年级不能为空", HealthException.class);
             JavaAssert.isTrue(StringUtils.isNotBlank(req.getStartDate()), ReturnCode.PARAM_ILLEGLE, "问卷开始时间不能为空",
                     HealthException.class);
             JavaAssert.isTrue(StringUtils.isNotBlank(req.getEndedDate()), ReturnCode.PARAM_ILLEGLE, "问卷结束时间不能为空",
@@ -231,17 +234,32 @@ public class QuestionnaireController {
             String schoolYear = schoolYearUtils.getSchoolYear(startDate, endedDate,
                     "问卷选择的时间,不在同一学年区间内,当前学年:" + schoolYearUtils.getCurrentSchoolYear());
 
-            Questionnaire q = new Questionnaire();
-            q.setId(req.getQuestionnaireId());
-            q.setSchoolYear(schoolYear);
-            q.setStartDate(startDate);
-            q.setEndedDate(endedDate);
-            q.setGradeNo(req.getGradeNo());
+            JSONArray gradeNos = req.getGradeNos();
+            int size = gradeNos.size();
+            for (int i = 0; i < size; i++) {
+                int gradeNo = gradeNos.getInteger(i);
 
-            User user = UserSessionUtils.getUserFromSession();
-            questionnaireRepository.updateToPublished(q, user.getUserName());
-            //生成学生问卷
-            userQuestionnaireRepository.createStudentQuestionAnswer(q.getId(), q.getGradeNo(), user.getUserName());
+                Questionnaire q = new Questionnaire();
+                q.setSchoolYear(schoolYear);
+                q.setStartDate(startDate);
+                q.setEndedDate(endedDate);
+                q.setGradeNo(gradeNo);
+
+                if (i == 0) {
+                    q.setId(req.getQuestionnaireId());
+                } else {
+                    BaseResp copyResp = copyQuestionnaire(req);
+                    Long newId = (Long) copyResp.getData();
+                    q.setId(newId);
+                }
+
+                User user = UserSessionUtils.getUserFromSession();
+                questionnaireRepository.updateToPublished(q, user.getUserName());
+                //生成学生问卷
+                userQuestionnaireRepository.createStudentQuestionAnswer(q.getId(), q.getGradeNo(), user.getUserName());
+
+            }
+
         } catch (HealthException e) {
             logger.error("发布问卷题目异常", e);
             resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
@@ -269,7 +287,7 @@ public class QuestionnaireController {
             questionnaireRepository.updateToDeleted(req.getQuestionnaireId(), user.getUserName());
         } catch (HealthException e) {
             logger.error("删除问卷题目异常", e);
-            resp = BaseResp.buildFailResp("删除问卷题目异常:" + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("删除问卷题目异常", e);
             resp = BaseResp.buildFailResp("删除问卷题目异常", BaseResp.class);
@@ -318,6 +336,9 @@ public class QuestionnaireController {
 
             questionnaireService.addScoreAndLatitude(req.getQuestionnaireId(), req.getQuestions(), user.getUserName());
             resp.setData(req.getQuestionnaireId());
+        } catch (HealthException e) {
+            logger.error("设置问卷题目分数纬度异常", e);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("设置问卷题目分数纬度异常", e);
             resp = BaseResp.buildFailResp("设置问卷题目分数纬度异常，" + e.getMessage(), BaseResp.class);
@@ -370,9 +391,12 @@ public class QuestionnaireController {
             questionnaireService.addQuestionnaireLatitudeDesc(req.getQuestionnaireId(), req.getLatitudes(),
                     user.getUserName());
             resp.setData(req.getQuestionnaireId());
+        } catch (HealthException e) {
+            logger.error("添加问卷纬度描述设置异常", e);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
-            logger.error("展示添加问卷纬度描述异常", e);
-            resp = BaseResp.buildFailResp("展示添加问卷纬度描述异常" + e.getMessage(), BaseResp.class);
+            logger.error("添加问卷纬度描述设置异常", e);
+            resp = BaseResp.buildFailResp("添加问卷纬度描述设置异常" + e.getMessage(), BaseResp.class);
         }
         logger.info("添加问卷纬度描述设置,resp:{}", resp);
         return resp;
@@ -471,6 +495,9 @@ public class QuestionnaireController {
 
             questionnaireService.addTeacherTestQuestionnaire(req.getQuestionnaireId(), req.getStudentId(),
                     req.getQuestionOptionsJson(), user.getUserName());
+        } catch (HealthException e) {
+            logger.error("保存教师测评学生结果异常", e);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("保存教师测评学生结果异常", e);
             resp = BaseResp.buildFailResp("保存教师测评学生结果异常" + e.getMessage(), BaseResp.class);
@@ -740,13 +767,13 @@ public class QuestionnaireController {
 
                 }
                 ja.add(personalScore);
+                JSONObject teacherData = new JSONObject();
+                teacherData.put("columns", columns);
+                teacherData.put("rows", ja);
+                //个人信息
+                data.put("teacherReportData", teacherData);
             }
-            JSONObject teacherData = new JSONObject();
-            teacherData.put("columns", columns);
-            teacherData.put("rows", ja);
 
-            //个人信息
-            data.put("teacherReportData", teacherData);
         }
     }
 
@@ -922,16 +949,17 @@ public class QuestionnaireController {
 
                 }
                 ja.add(personalScore);
-            }
-            //-----个人雷达图数据
-            JSONObject personData = new JSONObject();
-            personData.put("columns", columns);
-            personData.put("rows", ja);
+                //-----个人雷达图数据
+                JSONObject personData = new JSONObject();
+                personData.put("columns", columns);
+                personData.put("rows", ja);
 
-            //个人信息
-            data.put("studentReportData", personData);
-            //用户纬度说明
-            data.put("studentLatitudeData", descs);
+                //个人信息
+                data.put("studentReportData", personData);
+                //用户纬度说明
+                data.put("studentLatitudeData", descs);
+            }
+
         }
     }
 

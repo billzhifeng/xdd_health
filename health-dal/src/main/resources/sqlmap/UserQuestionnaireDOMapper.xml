@@ -71,7 +71,7 @@
     from t_user_questionnaire
     where id = #{id,jdbcType=BIGINT}
   </select>
-  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
+  <insert id="insertSelective" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO"  useGeneratedKeys="true" keyProperty="id">
     insert into t_user_questionnaire
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">

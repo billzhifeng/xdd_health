@@ -235,8 +235,8 @@ public class QuestionnaireRepository {
         ld.setId(null);
         ld.setSchoolYear(null);
         Date today = new Date();
-        ld.setTitle("复制-" + src.getTitle());
-        ld.setIntroduction("复制-" + src.getIntroduction());
+        ld.setTitle(src.getTitle());
+        ld.setIntroduction(src.getIntroduction());
         ld.setGradeNo(null);
         ld.setStartDate(null);
         ld.setEndedDate(null);
@@ -507,7 +507,7 @@ public class QuestionnaireRepository {
         ld.setIsDeleted(IsDeleted.Y.name());
         ld.setAddition(ld.getAddition() + ";" + userName + "删除该问卷");
         int count = dao.updateToDeleted(ld);
-        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "问卷已被删除或已发布不能删除", HealthException.class);
+        JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "问卷已被删除", HealthException.class);
     }
 
     /**

@@ -24,6 +24,7 @@ public class QuestionnaireReq extends Printable implements Serializable {
     private int       offSet  = -1;
 
     private int       gradeNo = -1;
+    private JSONArray gradeNos;
     private int       classNo = -1;
     private String    startDate;
     private String    endedDate;

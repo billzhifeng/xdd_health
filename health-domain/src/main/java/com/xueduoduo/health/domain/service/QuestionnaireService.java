@@ -189,17 +189,28 @@ public class QuestionnaireService {
             List<QuestionOption> qos = new ArrayList<QuestionOption>();
             BigDecimal minScore = new BigDecimal(0.0D);
             BigDecimal maxScore = new BigDecimal(0.0D);
+            int optitonCount = 0;
             for (QuestionOption qo : options) {
                 if (qo.getQuestionId().longValue() == q.getId().longValue()) {
+
                     qos.add(qo);
                     if (withScore) {
                         BigDecimal score = qo.getScore();
                         score = score == null ? new BigDecimal(0) : score;
-                        minScore = score;
+
+                        //首次赋值
+                        if (optitonCount == 0) {
+                            minScore = score;
+                            maxScore = score;
+                            optitonCount++;
+                        }
+
                         if (minScore.doubleValue() > score.doubleValue()) {
                             minScore = score;
                         }
-                        maxScore = maxScore.add(score);
+                        if (maxScore.doubleValue() < score.doubleValue()) {
+                            maxScore = score;
+                        }
                     }
                 }
             }
@@ -534,7 +545,7 @@ public class QuestionnaireService {
             //每个题目下的所有选项
             //            JSONArray ops = (JSONArray) q.get("optionsStr");
             List<QuestionOption> options = q.getOptions();
-            JavaAssert.isTrue(CollectionUtils.isNotEmpty(options), ReturnCode.PARAM_ILLEGLE, "问卷题目选项为空",
+            JavaAssert.isTrue(CollectionUtils.isNotEmpty(options), ReturnCode.PARAM_ILLEGLE, "题目选项不能为空",
                     HealthException.class);
 
             //更新每个选项分数+纬度
@@ -557,7 +568,7 @@ public class QuestionnaireService {
                 o.setLatitudeId(latitudeId.longValue());
                 o.setAddition(o.getAddition() + ";设置分数");
                 int count = questionOptionDOMapper.updateByPrimaryKeySelective(o);
-                JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷题目选项分数保存异常", HealthException.class);
+                JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "题目选项分数更新异常", HealthException.class);
             }
         }
     }

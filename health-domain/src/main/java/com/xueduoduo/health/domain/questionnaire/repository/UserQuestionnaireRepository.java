@@ -93,12 +93,26 @@ public class UserQuestionnaireRepository {
         cri.andIsDeletedEqualTo(IsDeleted.N.name());
         cri.andUserIdEqualTo(uq.getUserId());
         List<UserQuestionnaireDO> uqs = userQuestionnaireDOMapper.selectByExample(example);
-        JavaAssert.isTrue(CollectionUtils.isNotEmpty(uqs), ReturnCode.DB_ERROR,
-                "问卷ID=" + uq.getQuestionnaireId() + ",学生ID=" + uq.getUserId() + ",的答题结果不存在", HealthException.class);
-        JavaAssert.isTrue(1 == uqs.size(), ReturnCode.DB_ERROR, "学生对问卷Id=" + uq.getQuestionnaireId() + "答题结果不唯一",
-                HealthException.class);
 
-        UserQuestionnaireDO uqd = uqs.get(0);
+        UserQuestionnaireDO uqd = null;
+        //如果没有就新增
+        if (CollectionUtils.isEmpty(uqs)) {
+            Date now = new Date();
+            UserQuestionnaireDO create = new UserQuestionnaireDO();
+            create.setAnswerStatus(QuestionnaireAnswerStatus.INIT.name());
+            create.setCount(0);
+            create.setCreatedTime(now);
+            create.setUpdatedTime(now);
+            create.setCreateor("管理员");
+            create.setIsDeleted(IsDeleted.N.name());
+            create.setQuestionnaireId(uq.getQuestionnaireId());
+            create.setUserId(uq.getUserId());
+            userQuestionnaireDOMapper.insertSelective(create);
+
+            uqd = create;
+        } else {
+            uqd = uqs.get(0);
+        }
 
         UserQuestionnaireDO uqdo = convertUserQuestionnaireDO(uq);
         uqdo.setId(uqd.getId());

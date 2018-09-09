@@ -74,6 +74,7 @@ public class StudentReportController {
             Page<User> users = userRepository.loadUser(req.getGradeNo(), req.getClassNo(), req.getUserName(),
                     req.getOffSet(), req.getLength(), userRole, true, "STUDENT");
 
+            List<User> list = new ArrayList<User>();
             for (User stu : users.getPageData()) {
                 List<UserQuestionnaire> uqs = userQuestionnaireRepository.loadStudentUserQuestionnaires(stu.getId());
                 int count = 0;
@@ -92,8 +93,9 @@ public class StudentReportController {
                 } else {
                     stu.setUserStatus("暂无数据");
                 }
-
+                list.add(stu);
             }
+            users.setPageData(list);
             resp.setData(users);
         } catch (HealthException e) {
             logger.error("学生档案列表查询异常", e);

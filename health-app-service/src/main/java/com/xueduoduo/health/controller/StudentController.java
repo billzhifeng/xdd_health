@@ -181,10 +181,10 @@ public class StudentController {
                     req.getPreQuestionId(), req.getStudentId());
         } catch (HealthException e) {
             logger.error("保存学生回答问卷结果异常", e);
-            resp = BaseResp.buildFailResp("保存学生回答问卷结果异常" + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("保存学生回答问卷结果异常", e);
-            resp = BaseResp.buildFailResp("保存学生回答问卷结果异常" + e.getMessage(), BaseResp.class);
+            resp = BaseResp.buildFailResp("保存学生回答问卷结果异常", BaseResp.class);
         }
         logger.info("保存学生回答问卷结果,resp:{}", resp);
         return resp;
@@ -213,10 +213,10 @@ public class StudentController {
                     req.getOptionId(), req.getAnswerId(), user);
         } catch (HealthException e) {
             logger.error("保存学生回答问卷结果异常", e);
-            resp = BaseResp.buildFailResp("保存学生回答问卷结果异常" + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("保存学生回答问卷结果异常", e);
-            resp = BaseResp.buildFailResp("保存学生回答问卷结果异常" + e.getMessage(), BaseResp.class);
+            resp = BaseResp.buildFailResp("保存学生回答问卷结果异常", BaseResp.class);
         }
         logger.info("学生交卷,resp:{}", resp);
 

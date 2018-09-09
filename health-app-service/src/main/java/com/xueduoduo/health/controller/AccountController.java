@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alibaba.fastjson.JSONArray;
 import com.github.java.common.base.BaseResp;
 import com.github.java.common.base.Page;
 import com.github.java.common.utils.JavaAssert;
@@ -116,10 +117,10 @@ public class AccountController {
             userRepository.saveUser(u);
         } catch (DuplicateKeyException e) {
             logger.error("添加学生账号异常,主键冲突", e);
-            resp = BaseResp.buildFailResp("添加学生账号异常.学生账号" + req.getAccountNo() + "已存在", BaseResp.class);
+            resp = BaseResp.buildFailResp("学生账号" + req.getAccountNo() + "已存在", BaseResp.class);
         } catch (HealthException e) {
             logger.error("添加学生账号异常", e);
-            resp = BaseResp.buildFailResp("添加学生账号异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("添加学生账号异常", e);
             resp = BaseResp.buildFailResp("添加学生账号异常", BaseResp.class);
@@ -155,7 +156,7 @@ public class AccountController {
             userRepository.updateStudent(u);
         } catch (HealthException e) {
             logger.error("编辑学生账号异常", e);
-            resp = BaseResp.buildFailResp("编辑学生账号异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("编辑学生账号异常", e);
             resp = BaseResp.buildFailResp("编辑学生账号异常", BaseResp.class);
@@ -175,7 +176,7 @@ public class AccountController {
             userRepository.deleteUser(req.getStudentId());
         } catch (HealthException e) {
             logger.error("删除学生账号异常", e);
-            resp = BaseResp.buildFailResp("删除学生账号异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("删除学生账号异常", e);
             resp = BaseResp.buildFailResp("删除学生账号异常", BaseResp.class);
@@ -200,7 +201,7 @@ public class AccountController {
             userRepository.deleteUser(req.getTeacherId());
         } catch (HealthException e) {
             logger.error("删除教师账号异常", e);
-            resp = BaseResp.buildFailResp("删除教师账号异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("删除教师账号异常", e);
             resp = BaseResp.buildFailResp("删除教师账号异常", BaseResp.class);
@@ -241,10 +242,10 @@ public class AccountController {
             userRepository.saveUser(u);
         } catch (DuplicateKeyException e) {
             logger.error("添加教师账号异常,主键冲突", e);
-            resp = BaseResp.buildFailResp("添加教师账号异常.学生账号" + req.getAccountNo() + "已存在", BaseResp.class);
+            resp = BaseResp.buildFailResp("学生账号" + req.getAccountNo() + "已存在", BaseResp.class);
         } catch (HealthException e) {
             logger.error("添加教师账号异常", e);
-            resp = BaseResp.buildFailResp("添加教师账号异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("添加教师账号异常", e);
             resp = BaseResp.buildFailResp("添加教师账号异常", BaseResp.class);
@@ -282,7 +283,7 @@ public class AccountController {
             userRepository.updateTheacherWithoutClass(u);
         } catch (HealthException e) {
             logger.error("添加教师账号异常", e);
-            resp = BaseResp.buildFailResp("添加教师账号异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("添加教师账号异常", e);
             resp = BaseResp.buildFailResp("添加教师账号异常", BaseResp.class);
@@ -372,11 +373,39 @@ public class AccountController {
             if (StringUtils.isNoneBlank(req.getPasswd())) {
                 u.setPassword(req.getPasswd());
             }
+
             userRepository.updateTheacherWithoutClass(u);
+
+            if (null != req.getGradeClasses() && req.getGradeClasses().size() > 0) {
+                List<GradeClass> gcs = userRepository.loadGradeClassByTeacherId(req.getTeacherId());
+                //删除已有的
+                if (!CollectionUtils.isEmpty(gcs)) {
+                    for (GradeClass gc : gcs) {
+                        long temId = gc.getGradeClassId();
+                        userRepository.deleteTheacherClass(temId);
+                    }
+                }
+
+                //新增
+                JSONArray ja = req.getGradeClasses();
+                int size = ja.size();
+                for (int i = 0; i < size; i++) {
+                    //一个班级
+                    JSONArray tem = ja.getJSONArray(i);
+
+                    String cls1 = tem.getString(0);
+                    int gradeNo = Integer.parseInt(cls1);
+
+                    String cls2 = tem.getString(1);
+                    int classNo = Integer.parseInt(cls2);
+
+                    userRepository.saveTheacherClass(t, gradeNo, classNo);
+                }
+            }
 
         } catch (HealthException e) {
             logger.error("编辑教师个人中心异常", e);
-            resp = BaseResp.buildFailResp("编辑教师个人中心异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("编辑教师个人中心异常", e);
             resp = BaseResp.buildFailResp("编辑教师个人中心异常", BaseResp.class);
@@ -406,7 +435,7 @@ public class AccountController {
     }
 
     /**
-     * 教师个人中心修改班级
+     * 未使用 教师个人中心修改班级
      */
     @RequestMapping(value = "admin/account/teacherCenter/editClass", method = RequestMethod.POST)
     public BaseResp teacherEditClass(@RequestBody AcctReq req) {
@@ -427,7 +456,7 @@ public class AccountController {
 
         } catch (HealthException e) {
             logger.error("教师个人中心修改班级异常", e);
-            resp = BaseResp.buildFailResp("教师个人中心修改班级异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("教师个人中心修改班级异常", e);
             resp = BaseResp.buildFailResp("教师个人中心修改班级异常", BaseResp.class);
@@ -436,7 +465,7 @@ public class AccountController {
     }
 
     /**
-     * 教师个人中心添加班级
+     * 未使用 教师个人中心添加班级
      */
     @RequestMapping(value = "admin/account/teacherCenter/addClass", method = RequestMethod.POST)
     public BaseResp teacherAddClass(@RequestBody AcctReq req) {
@@ -496,7 +525,7 @@ public class AccountController {
 
         } catch (HealthException e) {
             logger.error("编辑教师个人中心异常", e);
-            resp = BaseResp.buildFailResp("编辑教师个人中心异常." + e.getReturnMsg(), BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("编辑教师个人中心异常", e);
             resp = BaseResp.buildFailResp("编辑教师个人中心异常", BaseResp.class);

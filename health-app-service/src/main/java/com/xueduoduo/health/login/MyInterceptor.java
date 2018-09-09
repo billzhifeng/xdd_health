@@ -40,10 +40,10 @@ public class MyInterceptor implements HandlerInterceptor {
         HttpSession session = request.getSession(true);
 
         //vue后sessionId 每次不一样
-        response.setHeader("Access-Control-Allow-Credentials", "true");
-        response.setHeader("Access-Control-Allow-Origin", ip);
-        response.setHeader("Access-Control-Allow-Headers",
-                "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+        //        response.setHeader("Access-Control-Allow-Credentials", "true");
+        //        response.setHeader("Access-Control-Allow-Origin", Arrays.asList(ip.split(",")));
+        //        response.setHeader("Access-Control-Allow-Headers",
+        //                "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
         //判断用户ID是否存在，不存在就跳转到登录界面
         if (session.getAttribute("userId") == null) {
