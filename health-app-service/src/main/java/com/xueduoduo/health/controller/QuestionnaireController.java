@@ -34,7 +34,9 @@ import com.xueduoduo.health.configuration.SchoolYearUtils;
 import com.xueduoduo.health.controller.dto.AddQuesLatitudeDescReq;
 import com.xueduoduo.health.controller.dto.AddQuestionnaireQuestionsInfo;
 import com.xueduoduo.health.controller.dto.QuestionnaireReq;
+import com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO;
 import com.xueduoduo.health.domain.common.HealthException;
+import com.xueduoduo.health.domain.enums.QuestionnaireAnswerStatus;
 import com.xueduoduo.health.domain.enums.QuestionnaireStatusType;
 import com.xueduoduo.health.domain.enums.QuestionnaireType;
 import com.xueduoduo.health.domain.enums.ReturnCode;
@@ -197,7 +199,7 @@ public class QuestionnaireController {
             resp.setData(req.getQuestionnaireId());
         } catch (HealthException e) {
             logger.error("保存问卷题目异常", e);
-            resp = BaseResp.buildFailResp("已发布问卷不能编辑", BaseResp.class);
+            resp = BaseResp.buildFailResp(e.getReturnMsg(), BaseResp.class);
         } catch (Exception e) {
             logger.error("保存问卷题目异常", e);
             resp = BaseResp.buildFailResp("保存问卷题目异常", BaseResp.class);
@@ -384,12 +386,12 @@ public class QuestionnaireController {
 
             JavaAssert.isTrue(null != req.getQuestionnaireId(), ReturnCode.PARAM_ILLEGLE, "问卷ID不能为空",
                     HealthException.class);
-            JavaAssert.isTrue(CollectionUtils.isNotEmpty(req.getLatitudes()), ReturnCode.PARAM_ILLEGLE, "纬度描述不能为空",
-                    HealthException.class);
             User user = UserSessionUtils.getUserFromSession();
 
-            questionnaireService.addQuestionnaireLatitudeDesc(req.getQuestionnaireId(), req.getLatitudes(),
-                    user.getUserName());
+            if (CollectionUtils.isNotEmpty(req.getLatitudes())) {
+                questionnaireService.addQuestionnaireLatitudeDesc(req.getQuestionnaireId(), req.getLatitudes(),
+                        user.getUserName());
+            }
             resp.setData(req.getQuestionnaireId());
         } catch (HealthException e) {
             logger.error("添加问卷纬度描述设置异常", e);
@@ -587,15 +589,15 @@ public class QuestionnaireController {
             }
 
             JSONObject data = new JSONObject();
-            //---学生文件
+            //---学生
             buildStudentData(req, data, latiMap, student);
             //-----------教师问卷信息----------------------
             List<Questionnaire> teacherQus = questionnaireRepository.loadQuestionnaire(qe.getSchoolYear(),
                     qe.getGradeNo(), QuestionnaireType.TEACHER.name(), QuestionnaireStatusType.PUBLISHED.name());
             Questionnaire teQu = null;
             if (CollectionUtils.isNotEmpty(teacherQus)) {
-                JavaAssert.isTrue(teacherQus.size() == 1, ReturnCode.PARAM_ILLEGLE, "同一学年统一年级有多份教师问卷",
-                        HealthException.class);
+                //                JavaAssert.isTrue(teacherQus.size() == 1, ReturnCode.PARAM_ILLEGLE, "同一学年统一年级有多份教师问卷",
+                //                        HealthException.class);
                 teQu = teacherQus.get(0);
                 buildTeacherData(data, latiMap, student, teQu);
             }
@@ -612,6 +614,15 @@ public class QuestionnaireController {
 
     private void buildTeacherData(JSONObject data, Map<Long, String> latiMap, User student,
                                   Questionnaire questionnaire) {
+
+        UserQuestionnaireDO uqu = userQuestionnaireRepository
+                .loadUserQuestionnaireByQuesIdAndStudId(questionnaire.getId(), student.getId());
+
+        //答题完成才有数据
+        if (!QuestionnaireAnswerStatus.DONE.name().equals(uqu.getAnswerStatus())) {
+            return;
+        }
+
         //问卷所有答案
         List<UserQuestionAnswer> gradeAns = userQuestionnaireRepository
                 .loadUserQuestionOptionsAnswers(questionnaire.getId(), null);
@@ -778,6 +789,15 @@ public class QuestionnaireController {
     }
 
     private void buildStudentData(QuestionnaireReq req, JSONObject data, Map<Long, String> latiMap, User student) {
+
+        UserQuestionnaireDO uqu = userQuestionnaireRepository
+                .loadUserQuestionnaireByQuesIdAndStudId(req.getQuestionnaireId(), student.getId());
+
+        //答题完成才有数据
+        if (!QuestionnaireAnswerStatus.DONE.name().equals(uqu.getAnswerStatus())) {
+            return;
+        }
+
         //问卷所有答案
         List<UserQuestionAnswer> gradeAns = userQuestionnaireRepository
                 .loadUserQuestionOptionsAnswers(req.getQuestionnaireId(), null);

@@ -47,6 +47,37 @@ public class UserQuestionnaireRepository {
     private UserRepository             userRepository;
 
     /**
+     * 删除问卷对应的学生答案
+     */
+    @Transactional
+    public void deleteQuestionAnswer(Long questionnaireId) {
+
+        //删除答卷
+        UserQuestionnaireDOExample example = new UserQuestionnaireDOExample();
+        UserQuestionnaireDOExample.Criteria cri = example.createCriteria();
+        cri.andIsDeletedEqualTo(IsDeleted.N.name());
+        cri.andQuestionnaireIdEqualTo(questionnaireId);
+        List<UserQuestionnaireDO> uqs = userQuestionnaireDOMapper.selectByExample(example);
+        if (CollectionUtils.isNotEmpty(uqs)) {
+            for (UserQuestionnaireDO src : uqs) {
+                userQuestionnaireDOMapper.updateToDelete(src);
+            }
+        }
+
+        //删除答案
+        UserQuestionAnswerDOExample example2 = new UserQuestionAnswerDOExample();
+        UserQuestionAnswerDOExample.Criteria cri2 = example2.createCriteria();
+        cri2.andQuestionnaireIdEqualTo(questionnaireId);
+        cri2.andIsDeletedEqualTo(IsDeleted.N.name());
+        List<UserQuestionAnswerDO> answer = userQuestionAnswerDOMapper.selectByExample(example2);
+        if (CollectionUtils.isNotEmpty(answer)) {
+            for (UserQuestionAnswerDO src2 : answer) {
+                userQuestionAnswerDOMapper.updateToDeleted(src2);
+            }
+        }
+    }
+
+    /**
      * 查询每个学生完成问卷对答题情况
      * 
      * @param questionnaireId

@@ -236,6 +236,12 @@
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
+  
+  <update id="updateToDeleted" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionAnswerDO">
+    update t_user_question_answer
+    set   is_deleted =  'Y' where id = #{id,jdbcType=BIGINT}
+  </update>
+  
   <update id="updateByPrimaryKey" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionAnswerDO">
     update t_user_question_answer
     set user_id = #{userId,jdbcType=BIGINT},

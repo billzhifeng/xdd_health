@@ -69,6 +69,9 @@ public class QuestionnaireRepository {
     @Autowired
     private QuestionnaireLatitudeScoreDOMapper questionnaireLatitudeScoreDOMapper;
 
+    @Autowired
+    private UserQuestionnaireRepository        userQuestionnaireRepository;
+
     public QuestionOption loadQuestionOptionById(Long id) {
         QuestionOptionDO od = questionOptionDOMapper.selectByPrimaryKey(id);
         JavaAssert.isTrue(null != od, ReturnCode.DATA_NOT_EXIST, "题目选项不存在,id=" + id, HealthException.class);
@@ -311,7 +314,7 @@ public class QuestionnaireRepository {
             count = dao.updateByPrimaryKeySelective(ld);
 
         } catch (DuplicateKeyException e) {
-            throw new HealthException(ReturnCode.OPERATOR_DATE_ILLEGLE, "同一学年,只能发布一个学生和一个教师问卷");
+            throw new HealthException(ReturnCode.OPERATOR_DATE_ILLEGLE, "同一学年只能发布一次教师问卷或者是学生问卷");
         }
         if (count != 1) {
             QuestionnaireDO questionnaire = dao.selectByPrimaryKey(src.getId());
@@ -508,6 +511,9 @@ public class QuestionnaireRepository {
         ld.setAddition(ld.getAddition() + ";" + userName + "删除该问卷");
         int count = dao.updateToDeleted(ld);
         JavaAssert.isTrue(1 == count, ReturnCode.DB_ERROR, "问卷已被删除", HealthException.class);
+
+        //级联删除 学生答题、题目答案
+        userQuestionnaireRepository.deleteQuestionAnswer(id);
     }
 
     /**

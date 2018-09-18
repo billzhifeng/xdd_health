@@ -677,46 +677,49 @@ public class QuestionnaireService {
             //纬度Id
             Long latitudeId = q.getId();//(Integer) q.get("latitudeId");
             List<QuestionnaireLatitudeScore> latitudeScoreDesc = q.getLatitudeScoreDesc();
-            for (QuestionnaireLatitudeScore score : latitudeScoreDesc) {
-                BigDecimal maxScore = score.getScoreMax();
-                BigDecimal minScore = score.getScoreMin();
-                minScore.setScale(1, BigDecimal.ROUND_HALF_UP);
-                maxScore.setScale(1, BigDecimal.ROUND_HALF_UP);
+            JavaAssert.isTrue(CollectionUtils.isNotEmpty(latitudeScoreDesc), ReturnCode.PARAM_ILLEGLE,
+                    "纬度" + q.getDisplayName() + "描述为空", HealthException.class);
+            if (CollectionUtils.isNotEmpty(latitudeScoreDesc)) {
+                for (QuestionnaireLatitudeScore score : latitudeScoreDesc) {
+                    BigDecimal maxScore = score.getScoreMax();
+                    BigDecimal minScore = score.getScoreMin();
+                    minScore.setScale(1, BigDecimal.ROUND_HALF_UP);
+                    maxScore.setScale(1, BigDecimal.ROUND_HALF_UP);
 
-                String descStr = score.getComment();
-                Long scoreId = score.getId();
+                    String descStr = score.getComment();
+                    Long scoreId = score.getId();
 
-                if (null != scoreId) {
-                    //更新
-                    isUpdateFlag = true;
-                    updatedIds.add(scoreId.longValue());
+                    if (null != scoreId) {
+                        //更新
+                        isUpdateFlag = true;
+                        updatedIds.add(scoreId.longValue());
 
-                    QuestionnaireLatitudeScoreDO scdb = new QuestionnaireLatitudeScoreDO();
-                    scdb.setId(scoreId.longValue());
-                    scdb.setComment(descStr);
-                    scdb.setScoreMax(maxScore);
-                    scdb.setScoreMin(minScore);
-                    scdb.setUpdatedTime(now);
-                    int count = questionnaireLatitudeScoreDOMapper.updateByPrimaryKeySelective(scdb);
-                    JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "学生问卷纬度描述更新异常,id=" + scoreId,
-                            HealthException.class);
-                } else {
-                    //新增
-                    QuestionnaireLatitudeScoreDO scdb = new QuestionnaireLatitudeScoreDO();
-                    scdb.setComment(descStr);
-                    scdb.setCreatedTime(now);
-                    scdb.setUpdatedTime(now);
-                    scdb.setCreateor(userName);
-                    scdb.setIsDeleted(IsDeleted.N.name());
-                    scdb.setLatitudeId(latitudeId.longValue());
-                    scdb.setQuestionnaireId(questionnaireId);
-                    scdb.setScoreMax(maxScore);
-                    scdb.setScoreMin(minScore);
-                    int count = questionnaireLatitudeScoreDOMapper.insertSelective(scdb);
-                    JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷纬度描述保存异常", HealthException.class);
+                        QuestionnaireLatitudeScoreDO scdb = new QuestionnaireLatitudeScoreDO();
+                        scdb.setId(scoreId.longValue());
+                        scdb.setComment(descStr);
+                        scdb.setScoreMax(maxScore);
+                        scdb.setScoreMin(minScore);
+                        scdb.setUpdatedTime(now);
+                        int count = questionnaireLatitudeScoreDOMapper.updateByPrimaryKeySelective(scdb);
+                        JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "学生问卷纬度描述更新异常,id=" + scoreId,
+                                HealthException.class);
+                    } else {
+                        //新增
+                        QuestionnaireLatitudeScoreDO scdb = new QuestionnaireLatitudeScoreDO();
+                        scdb.setComment(descStr);
+                        scdb.setCreatedTime(now);
+                        scdb.setUpdatedTime(now);
+                        scdb.setCreateor(userName);
+                        scdb.setIsDeleted(IsDeleted.N.name());
+                        scdb.setLatitudeId(latitudeId.longValue());
+                        scdb.setQuestionnaireId(questionnaireId);
+                        scdb.setScoreMax(maxScore);
+                        scdb.setScoreMin(minScore);
+                        int count = questionnaireLatitudeScoreDOMapper.insertSelective(scdb);
+                        JavaAssert.isTrue(1 == count, ReturnCode.PARAM_ILLEGLE, "问卷纬度描述保存异常", HealthException.class);
+                    }
                 }
             }
-
         }
 
         //非更新操作
@@ -974,7 +977,8 @@ public class QuestionnaireService {
         List<UserQuestionnaire> notFinishedList = new ArrayList<UserQuestionnaire>();
         for (UserQuestionnaire uq : list) {
             QuestionnaireDO tem = questionnaireRepository.loadQuestionnaireDOById(uq.getQuestionnaireId());
-            if (!QuestionnaireType.STUDENT.name().equals(tem.getQuestionnaireType())) {
+            if (!QuestionnaireType.STUDENT.name().equals(tem.getQuestionnaireType())
+                    || !IsDeleted.N.name().equals(tem.getIsDeleted())) {
                 continue;
             }
             Questionnaire q = questionnaireRepository.loadById(uq.getQuestionnaireId());
@@ -1003,6 +1007,8 @@ public class QuestionnaireService {
         Questionnaire stuQu = questionnaireRepository.loadById(questionnaireId);
         JavaAssert.isTrue(null != stuQu, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId,
                 HealthException.class);
+        json.put("introduction", stuQu.getIntroduction());
+        json.put("notice", stuQu.getIntroduction());
 
         //2查询问卷下所有问题
         List<Question> questions = questionnaireRepository.loadQuestionnaireQuestions(questionnaireId);

@@ -192,6 +192,9 @@
    <update id="updateToSubmit" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
     update t_user_questionnaire set answer_status='DONE',updated_time=NOW()  where id = #{id,jdbcType=BIGINT} and answer_status='INIT'
   </update>
+     <update id="updateToDelete" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
+    update t_user_questionnaire set is_deleted='Y',updated_time=NOW()  where id = #{id,jdbcType=BIGINT} 
+  </update>
      <update id="updateToStartAnswer" parameterType="com.xueduoduo.health.dal.dataobject.UserQuestionnaireDO">
     update t_user_questionnaire set startTime=NOW(),updated_time=NOW()  where id = #{id,jdbcType=BIGINT} and answer_status='INIT'
   </update>

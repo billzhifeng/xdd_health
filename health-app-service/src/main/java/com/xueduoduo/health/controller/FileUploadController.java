@@ -71,12 +71,9 @@ public class FileUploadController {
                     dest.getParentFile().mkdirs();
                 }
                 file.transferTo(dest);
-                //                if ("dev".equals(springProfilesActive)) {
-                //                    resp.setData("/files/" + returnUrl);
-                //                } else {
-                //                    
-                //                }
-                resp.setData("/data/heartTest/files/" + returnUrl);
+                String fileUrl = "/data/heartTest/files/" + returnUrl;
+                resp.setData(fileUrl);
+                logger.info("文件上传成功,file_url:{}", fileUrl);
             } catch (FileNotFoundException e) {
                 logger.error("文件上传失败", e);
                 resp = BaseResp.buildFailResp("上传失败", BaseResp.class);
@@ -85,6 +82,7 @@ public class FileUploadController {
                 resp = BaseResp.buildFailResp("上传失败", BaseResp.class);
             }
         }
+
         return resp;
     }
 

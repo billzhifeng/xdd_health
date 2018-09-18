@@ -188,22 +188,7 @@
   </update>
   
   <update id="updateToDeleted" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO">
-    update t_questionnaire_latitude_score
-    <set>
-     
-      <if test="addition != null">
-        addition = #{addition,jdbcType=VARCHAR},
-      </if>
-     
-      <if test="updatedTime != null">
-        updated_time = #{updatedTime,jdbcType=TIMESTAMP},
-      </if>
-      
-      <if test="isDeleted != null">
-        is_deleted = #{isDeleted,jdbcType=CHAR},
-      </if>
-    </set>
-    where id = #{id,jdbcType=BIGINT} and is_deleted='N'
+    update t_questionnaire_latitude_score set updated_time = NOW(),is_deleted='Y'  where id = #{id,jdbcType=BIGINT} and is_deleted='N'
   </update>
   
   <update id="updateByPrimaryKey" parameterType="com.xueduoduo.health.dal.dataobject.QuestionnaireLatitudeScoreDO">

@@ -20,6 +20,8 @@ public interface UserQuestionnaireDOMapper {
 
     int updateToSubmit(UserQuestionnaireDO record);
 
+    int updateToDelete(UserQuestionnaireDO record);
+
     int updateToStartAnswer(UserQuestionnaireDO record);
 
     int updateByPrimaryKey(UserQuestionnaireDO record);

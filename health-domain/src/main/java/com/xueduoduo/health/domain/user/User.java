@@ -256,11 +256,49 @@ public class User extends Printable {
     }
 
     public String getGradeNoStr() {
-        return gradeNo + "";
+        return numToStr(gradeNo);
     }
 
     public String getClassNoStr() {
-        return classNo + "";
+        return numToStr(classNo);
     }
 
+    public void setGradeNoStr(String gradeNoStr) {
+        this.gradeNoStr = gradeNoStr;
+    }
+
+    public void setClassNoStr(String classNoStr) {
+        this.classNoStr = classNoStr;
+    }
+
+    private String numToStr(Integer num) {
+        if (null == num) {
+            return null;
+        }
+        String str = "";
+        switch (num) {
+            case 1:
+                str = "一";
+                break;
+            case 2:
+                str = "二";
+                break;
+            case 3:
+                str = "三";
+                break;
+            case 4:
+                str = "四";
+                break;
+            case 5:
+                str = "五";
+                break;
+            case 6:
+                str = "六";
+                break;
+
+            default:
+                break;
+        }
+        return str;
+    }
 }
