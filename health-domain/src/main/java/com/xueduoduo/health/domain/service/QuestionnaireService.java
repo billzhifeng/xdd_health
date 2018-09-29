@@ -835,13 +835,26 @@ public class QuestionnaireService {
 
             //教师对学生完成测评
             if (alreadyTestStudenIds.contains(u.getId().longValue())) {
+
                 stu.put("teacherAnswer", "已处理");
+                stu.put("status", "FINISHED");
             } else {
                 if (null != teQu) {
+
+                    //测评已过期
+                    if (null != stuQu.getEndedDate()) {
+                        if (stuQu.getEndedDate().before(new Date())) {
+                            stu.put("status", "FINISHED");
+                        } else {
+                            stu.put("status", "CHECKING");
+                        }
+                    }
+
                     stu.put("teacherAnswer", "未处理");
                     stu.put("teacherQuestionnaireId", teQu.getId());
                 } else {
                     stu.put("teacherAnswer", "无问卷");
+                    stu.put("status", "FINISHED");
                     stu.put("teacherQuestionnaireId", null);
                 }
             }
@@ -863,6 +876,15 @@ public class QuestionnaireService {
         //1查询教师问卷
         Questionnaire tq = questionnaireRepository.loadById(questionnaireId);
         JavaAssert.isTrue(null != tq, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId, HealthException.class);
+
+        //测评已过期
+        if (null != tq.getEndedDate()) {
+            if (tq.getEndedDate().before(new Date())) {
+                resp = BaseResp.buildFailResp("测评已过期", BaseResp.class);
+                return resp;
+            }
+        }
+
         json.put("questionnaire", tq);
 
         //2查询学生
@@ -983,6 +1005,14 @@ public class QuestionnaireService {
             }
             Questionnaire q = questionnaireRepository.loadById(uq.getQuestionnaireId());
             uq.setQuestionnaireName(q.getTitle());
+            //测评已过期
+            if (null != q.getEndedDate()) {
+                if (q.getEndedDate().before(new Date())) {
+                    uq.setStatus("FINISHED");
+                } else {
+                    uq.setStatus("CHECKING");
+                }
+            }
 
             if (QuestionnaireAnswerStatus.DONE.name().equals(uq.getAnswerStatus())) {
                 finishedList.add(uq);
@@ -1007,6 +1037,15 @@ public class QuestionnaireService {
         Questionnaire stuQu = questionnaireRepository.loadById(questionnaireId);
         JavaAssert.isTrue(null != stuQu, ReturnCode.DATA_NOT_EXIST, "问卷不存在,id=" + questionnaireId,
                 HealthException.class);
+
+        //测评已过期
+        if (null != stuQu.getEndedDate()) {
+            if (stuQu.getEndedDate().before(new Date())) {
+                resp = BaseResp.buildFailResp("测评已过期", BaseResp.class);
+                return resp;
+            }
+        }
+
         json.put("introduction", stuQu.getIntroduction());
         json.put("notice", stuQu.getIntroduction());
 

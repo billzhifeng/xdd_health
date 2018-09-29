@@ -114,7 +114,14 @@ public class UserRepository {
             cri2.andPhoneEqualTo(loginName);
             users = userDOMapper.selectByExample(example2);
             if (CollectionUtils.isEmpty(users)) {
-                return null;
+                UserDOExample example3 = new UserDOExample();
+                UserDOExample.Criteria cri3 = example3.createCriteria();
+                cri3.andIsDeletedEqualTo(IsDeleted.N.name());
+                cri3.andStudentNoEqualTo(loginName);
+                users = userDOMapper.selectByExample(example3);
+                if (CollectionUtils.isEmpty(users)) {
+                    return null;
+                }
             }
         }
         JavaAssert.isTrue(users.size() == 1, ReturnCode.DATA_NOT_EXIST, "登录名为：" + loginName + " 的用户不存在",

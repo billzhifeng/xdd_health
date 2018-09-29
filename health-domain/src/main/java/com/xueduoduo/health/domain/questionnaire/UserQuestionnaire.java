@@ -35,6 +35,9 @@ public class UserQuestionnaire {
 
     private String  isDeleted;
 
+    //CHECKING测评中 FINISHED结束
+    private String  status;
+
     public Long getId() {
         return id;
     }
@@ -129,6 +132,14 @@ public class UserQuestionnaire {
 
     public void setQuestionnaireName(String questionnaireName) {
         this.questionnaireName = questionnaireName;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
 }
