@@ -14,7 +14,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/files/**").addResourceLocations("file:D:/files/");
+        //本机
+        //        registry.addResourceHandler("/files/**").addResourceLocations("file:D:/files/");
+
+        //window server 2008
+        registry.addResourceHandler("/files/**").addResourceLocations("file:E:/files/");
         registry.addResourceHandler("/data/heartTest/files/**").addResourceLocations("file:/data/heartTest/files/");
         registry.addResourceHandler("/data/heartTest/healthTestFiles/**")
                 .addResourceLocations("file:/data/heartTest/healthTestFiles/");
